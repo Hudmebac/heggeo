@@ -61,6 +61,60 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  .hc-light {
+    --background: 0 0% 100%; /* White */
+    --foreground: 0 0% 0%; /* Black */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 260 100% 55%; /* Vivid Blue/Purple */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 180 100% 40%; /* Vivid Cyan */
+    --secondary-foreground: 0 0% 0%; /* Black */
+    --muted: 0 0% 88%; 
+    --muted-foreground: 0 0% 10%; 
+    --accent: var(--secondary);
+    --accent-foreground: var(--secondary-foreground);
+    --destructive: 0 100% 50%; /* Bright Red */
+    --destructive-foreground: 0 0% 100%; /* White */
+    --border: 0 0% 30%; /* Darker border */
+    --input: 0 0% 30%; /* Darker input border */
+    --ring: 260 100% 55%;
+    --chart-1: 260 100% 55%;
+    --chart-2: 180 100% 40%;
+    --chart-3: 0 100% 50%;
+    --chart-4: 50 100% 50%;
+    --chart-5: 300 100% 60%;
+  }
+
+  .hc-dark {
+    --background: 0 0% 0%; /* Black */
+    --foreground: 0 0% 100%; /* White */
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 50 100% 50%; /* Vivid Yellow */
+    --primary-foreground: 0 0% 0%; /* Black */
+    --secondary: 300 100% 60%; /* Vivid Magenta */
+    --secondary-foreground: 0 0% 0%; /* Black */
+    --muted: 0 0% 20%; 
+    --muted-foreground: 0 0% 90%; 
+    --accent: var(--secondary);
+    --accent-foreground: var(--secondary-foreground);
+    --destructive: 0 100% 60%; /* Bright Red */
+    --destructive-foreground: 0 0% 0%; /* Black */
+    --border: 0 0% 70%; /* Lighter border */
+    --input: 0 0% 70%; /* Lighter input border */
+    --ring: 50 100% 50%;
+    --chart-1: 50 100% 50%;
+    --chart-2: 300 100% 60%;
+    --chart-3: 180 100% 50%; /* Vivid Cyan on Dark */
+    --chart-4: 260 100% 65%; /* Vivid Blue/Purple on Dark */
+    --chart-5: 0 0% 100%; /* White for charts */
+  }
 }
 
 @layer base {

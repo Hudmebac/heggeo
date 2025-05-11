@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LogoIcon } from '@/components/icons/LogoIcon';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 export function Header() {
   return (
@@ -11,7 +12,10 @@ export function Header() {
             HegGeo
           </h1>
         </Link>
-        {/* Future navigation items can go here */}
+        <div className="flex items-center gap-4">
+          <ThemeSwitcher />
+          {/* Future navigation items can go here */}
+        </div>
       </div>
     </header>
   );

@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter, Orbitron } from 'next/font/google';
 import './globals.css';
@@ -8,7 +9,7 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const orbitronFont = Orbitron({ // Renamed to avoid conflict with Orbitron component if any
+const orbitronFont = Orbitron({ 
   variable: '--font-orbitron',
   subsets: ['latin'],
   weight: ['400', '500', '700', '900'],
@@ -19,6 +20,43 @@ export const metadata: Metadata = {
   description: 'Drop time-limited Geos and share your location.',
 };
 
+// Function to safely stringify for dangerouslySetInnerHTML
+const safelySetInnerHTML = (scriptContent: string) => {
+  return { __html: scriptContent.replace(/</g, '\\u003c') };
+};
+
+const ThemeInitializationScript = () => (
+  <script
+    dangerouslySetInnerHTML={safelySetInnerHTML(`
+      (function() {
+        const THEME_STORAGE_KEY = 'heggeo-theme';
+        function getInitialTheme() {
+          try {
+            const persistedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+            if (persistedTheme && ["light", "dark", "hc-light", "hc-dark"].includes(persistedTheme)) {
+              return persistedTheme;
+            }
+          } catch (e) { /* localStorage may be disabled or inaccessible */ }
+          
+          // Fallback to system preference if enabled, otherwise 'light'
+          // const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          // if (systemPrefersDark) return 'dark';
+
+          return 'light'; // Default theme
+        }
+        const theme = getInitialTheme();
+        const root = document.documentElement;
+        root.classList.remove('light', 'dark', 'hc-light', 'hc-dark'); // Clear any existing
+        if (theme !== 'light') { // 'light' is default, no class needed unless specific styles depend on .light
+            root.classList.add(theme);
+        }
+        // console.log('Initial theme applied by script:', theme);
+      })();
+    `)}
+  />
+);
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,6 +64,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <ThemeInitializationScript />
+      </head>
       <body className={`${inter.variable} ${orbitronFont.variable} antialiased`}>
         {children}
         <Toaster />
