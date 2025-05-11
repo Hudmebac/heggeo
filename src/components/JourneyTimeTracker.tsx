@@ -22,7 +22,7 @@ export function JourneyTimeTracker() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!source || !destination) {
-      setError("Please enter both source and destination.");
+      setError("Please enter both source and destination locations.");
       return;
     }
     setIsLoading(true);
@@ -42,7 +42,7 @@ export function JourneyTimeTracker() {
       setJourneyDetails(result);
       toast({
         title: "Journey Calculated!",
-        description: `Route from ${result.sourceName} to ${result.destinationName} found.`,
+        description: `Route from ${result.sourceName || source} to ${result.destinationName || destination} found.`,
       });
     }
     setIsLoading(false);
@@ -76,32 +76,31 @@ export function JourneyTimeTracker() {
           Journey Time Tracker
         </CardTitle>
         <CardDescription>
-          Calculate distance and travel duration between two locations.
-          Enter addresses or place names.
+          Calculate distance and travel duration. Enter addresses, place names, or search for landmarks.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="source-address">Source</Label>
+            <Label htmlFor="source-address">Search Source Location</Label>
             <Input
               id="source-address"
               type="text"
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              placeholder="e.g., Eiffel Tower, Paris"
+              placeholder="e.g., Times Square, New York or 1600 Amphitheatre Pkwy"
               disabled={isLoading}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="destination-address">Destination</Label>
+            <Label htmlFor="destination-address">Search Destination Location</Label>
             <Input
               id="destination-address"
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="e.g., Louvre Museum, Paris"
+              placeholder="e.g., Central Park, New York or Golden Gate Bridge"
               disabled={isLoading}
               required
             />
@@ -157,3 +156,4 @@ export function JourneyTimeTracker() {
     </Card>
   );
 }
+
