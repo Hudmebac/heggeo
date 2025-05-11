@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -55,6 +56,10 @@ export function AlarmButton() {
       siren.dispose();
       setSiren(null);
     }
+    // Ensure Tone.js transport is not affecting if it was accidentally started
+    // if (Tone.Transport.state === 'started') {
+    //   Tone.Transport.stop();
+    // }
   }, [siren, lfo]);
   
   const startAlarmSound = useCallback(async (durationSeconds: number, volumePercent: number, sirenType: SirenType) => {
@@ -68,8 +73,14 @@ export function AlarmButton() {
 
       const newSiren = new Tone.Oscillator(440, sirenType).toDestination();
       
-      const dbVolume = volumePercent === 0 ? -Infinity : -50 + (volumePercent / 100) * 50;
+      // Ensure master output is not muted by the application itself.
+      if (Tone.Destination.mute) {
+        Tone.Destination.mute = false;
+      }
+      
+      const dbVolume = volumePercent === 0 ? -Infinity : -50 + (volumePercent / 100) * 50; // Max volume is 0dB
       newSiren.volume.value = dbVolume;
+
 
       const newLfo = new Tone.LFO({
         frequency: 2, 
@@ -100,40 +111,51 @@ export function AlarmButton() {
 
   useEffect(() => {
     let timerId: NodeJS.Timeout | null = null;
+
     if (isAlarming && timeLeft > 0) {
       timerId = setInterval(() => {
         setTimeLeft((prevTime) => {
           const newTimeLeft = prevTime - 1;
-          if (newTimeLeft < 0) { // Timer has fully expired (e.g., prevTime was 0, newTimeLeft is -1)
-            clearInterval(timerId!);
+          if (newTimeLeft <= 0) { // Changed from < 0 to <= 0 to stop when timeLeft hits 0
+            clearInterval(timerId!); // Clear interval immediately
             setIsAlarming(false);
             setCurrentAlarmType(null);
-            stopAlarmSound();
-            return 0; // Final timeLeft state
+            stopAlarmSound(); // Call stop sound
+            return 0; // Ensure timeLeft state is 0
           }
-          return newTimeLeft; // Continue countdown
+          return newTimeLeft;
         });
       }, 1000);
+    } else if (isAlarming && timeLeft <= 0) {
+      // This case handles if alarm was started with duration 0 or less,
+      // or if timeLeft became 0 through other means and interval didn't catch it.
+      // The interval logic above should now robustly handle normal countdown to 0.
+      setIsAlarming(false);
+      setCurrentAlarmType(null);
+      stopAlarmSound();
     }
 
     return () => {
       if (timerId) {
         clearInterval(timerId);
       }
-      // If the effect cleans up (e.g. component unmount, or dependencies change causing re-run),
-      // and an alarm was active (isAlarming in closure was true), ensure sound stops.
-      // This is primarily for unmounts or manual stops causing isAlarming to change.
-      // If timer completes normally, stopAlarmSound is already called from setInterval callback.
-      // Redundant calls to stopAlarmSound are handled by its internal checks.
-      if (isAlarming && (siren || lfo)) { // Check isAlarming from closure
-        // This check ensures we only stop sound if it was alarming when this effect instance was active.
-        // And also if siren/lfo objects actually exist.
-        // stopAlarmSound(); // This might be too aggressive or cause issues if isAlarming was just set to false by the timer.
-        // Relying on specific calls to stopAlarmSound (in timer, in handleStopAlarm) is safer.
-        // The main job of THIS cleanup is the clearInterval.
+      // If the component unmounts or dependencies change such that the effect is cleaned up
+      // while an alarm is active, we need to ensure the sound stops.
+      // This check uses the values from the closure when the effect was set up.
+      // The primary stopping mechanism is via setIsAlarming(false) triggering the logic above.
+      // However, for direct unmounts, this explicit stop is a safeguard.
+      if (isAlarming && (siren || lfo)) {
+        // This is a fallback. `isAlarming` from closure might be true even if
+        // state `isAlarming` has just been set to false by the timer.
+        // `stopAlarmSound` is idempotent due to null checks.
+        // Consider if `stopAlarmSound` itself should be called if `isAlarming` was true in closure.
+        // The current logic: when isAlarming becomes false (either by timer or manual stop),
+        // the effect re-runs, `timeLeft <= 0` with `isAlarming = true` (from previous state)
+        // or `isAlarming = false` (current state) leads to sound stop or no action.
+        // The critical path is that `stopAlarmSound` is reliably called by the timer.
       }
     };
-  }, [isAlarming, timeLeft, stopAlarmSound, siren, lfo]);
+  }, [isAlarming, timeLeft, stopAlarmSound, setTimeLeft, setIsAlarming, setCurrentAlarmType, siren, lfo]);
 
 
   const handleInstantAlarm = () => {
@@ -152,8 +174,8 @@ export function AlarmButton() {
   const handleStopAlarm = () => {
     setIsAlarming(false);
     setCurrentAlarmType(null);
-    setTimeLeft(0); // This will trigger useEffect, and its cleanup will clear any existing timer.
-    stopAlarmSound(); // Explicitly stop sound now.
+    setTimeLeft(0); 
+    stopAlarmSound(); 
   };
 
   const formatTimeLeft = (seconds: number) => {
@@ -284,4 +306,3 @@ export function AlarmButton() {
     </Card>
   );
 }
-

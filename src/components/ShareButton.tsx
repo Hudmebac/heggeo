@@ -1,7 +1,8 @@
+
 "use client";
 
 import type { Geo } from '@/lib/types';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,114 +11,90 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input'; // Re-using ShadCN Input for file
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Share2, ImageUp, Camera, Loader2, Trash2 } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-import { describeImage } from '@/ai/flows/describe-image-flow'; // Import the Genkit flow
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { Share2, Camera, Paperclip, Loader2 } from 'lucide-react';
+import { describeImage, type DescribeImageInput } from '@/ai/flows/describe-image-flow';
+import NextImage from 'next/image'; // Renamed to avoid conflict if any, and use for Next.js image optimization
 
 interface ShareButtonProps {
   geo: Geo;
 }
 
 export function ShareButton({ geo }: ShareButtonProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
-  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
-  const [aiDescription, setAiDescription] = useState<string | null>(null);
-  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
+
   const { toast } = useToast();
 
-  const resetImageState = useCallback(() => {
-    setImageDataUri(null);
-    setAiDescription(null);
-    setIsGeneratingDescription(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setHasCameraPermission(null); 
-    // setShowCamera(false); // Don't hide camera view if reset is called from within camera view (e.g. permission denial)
-  }, []);
-
-  
-  useEffect(() => {
-    if (showCamera) {
-      const getCameraPermission = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          setHasCameraPermission(true);
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        } catch (error) {
-          console.error('Error accessing camera:', error);
-          setHasCameraPermission(false);
-          toast({
-            variant: 'destructive',
-            title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings.',
-          });
-          setShowCamera(false); // Hide camera view if permission denied
-          resetImageState();
-        }
-      };
-      getCameraPermission();
-    } else {
-       // Cleanup camera stream when showCamera becomes false
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
-        }
-    }
-    // Ensure cleanup when component unmounts or showCamera changes
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [showCamera, toast, resetImageState]);
-
+  const APP_LINK = "https://heggeo.netlify.app/";
+  const HASHTAG = "#HegGeo";
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "Image Too Large",
-          description: "Please select an image smaller than 5MB.",
-          variant: "destructive",
-        });
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        return;
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+      if (isCameraOpen && stream) { // Close camera if open
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
+        setIsCameraOpen(false);
+        if (videoRef.current) videoRef.current.srcObject = null;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageDataUri(reader.result as string);
-        setAiDescription(null); // Clear previous AI description
-      };
-      reader.readAsDataURL(file);
     }
   };
 
-  const handleCapture = () => {
-    if (videoRef.current && canvasRef.current && hasCameraPermission) {
+  const stopCameraStream = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      if (videoRef.current) videoRef.current.srcObject = null;
+    }
+    setIsCameraOpen(false);
+  }, [stream]);
+
+  const handleOpenCamera = async () => {
+    if (isCameraOpen && stream) {
+      stopCameraStream();
+      return;
+    }
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setIsCameraOpen(true);
+      setHasCameraPermission(true);
+      setPhotoFile(null); 
+      setPhotoPreview(null);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings.',
+      });
+    }
+  };
+
+  const handleCapturePhoto = () => {
+    if (videoRef.current && canvasRef.current && stream) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       canvas.width = video.videoWidth;
@@ -125,182 +102,175 @@ export function ShareButton({ geo }: ShareButtonProps) {
       const context = canvas.getContext('2d');
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        // Use image/jpeg for smaller file sizes, adjust quality as needed
-        const dataUri = canvas.toDataURL('image/jpeg', 0.8); 
-        setImageDataUri(dataUri);
-        setAiDescription(null); // Clear previous AI description
+        canvas.toBlob(blob => {
+          if (blob) {
+            const file = new File([blob], "capture.png", { type: "image/png" });
+            setPhotoFile(file);
+            setPhotoPreview(URL.createObjectURL(file));
+          }
+        }, 'image/png');
       }
-      setShowCamera(false); // Hide camera view after capture
-    } else {
-        toast({
-            title: "Capture Failed",
-            description: "Could not capture photo. Ensure camera is active and permissions are granted.",
-            variant: "destructive",
+      stopCameraStream();
+    }
+  };
+
+  const handleShare = async () => {
+    setIsProcessing(true);
+    let imageDescription = "";
+    
+    if (photoFile) {
+      try {
+        const photoDataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(photoFile);
         });
-    }
-  };
 
-  const handleGenerateDescription = async () => {
-    if (!imageDataUri) return;
-    setIsGeneratingDescription(true);
-    try {
-      const result = await describeImage({ photoDataUri: imageDataUri });
-      setAiDescription(result.description);
-      toast({
-        title: "AI Description Generated!",
-        description: "You can edit the description below if needed.",
-      });
-    } catch (error) {
-      console.error("Error generating AI description:", error);
-      toast({
-        title: "AI Description Failed",
-        description: (error as Error).message || "Could not generate a description. Please try again or write your own.",
-        variant: "destructive",
-      });
-      setAiDescription(""); // Allow manual input even if AI fails
-    } finally {
-      setIsGeneratingDescription(false);
+        const aiInput: DescribeImageInput = { photoDataUri };
+        const aiOutput = await describeImage(aiInput);
+        imageDescription = aiOutput.description;
+        toast({ title: "AI Description", description: `Generated: ${imageDescription}` });
+      } catch (error) {
+        console.error("Error processing image for AI description:", error);
+        toast({
+          title: "AI Error",
+          description: "Could not generate image description. Sharing without it.",
+          variant: "default",
+        });
+      }
     }
-  };
 
-  const handleFinalShare = () => {
-    const mapLink = `https://maps.google.com/?q=${geo.latitude},${geo.longitude}`;
+    const geoLink = `https://www.google.com/maps?q=${geo.latitude},${geo.longitude}`;
     
     let messageParts = [];
-    if (customMessage.trim()) {
-      messageParts.push(customMessage.trim());
-    }
-    messageParts.push(`Check out my Geo!\nLocation: ${mapLink}`);
+    if (customMessage) messageParts.push(customMessage);
+    messageParts.push(`My current GeoDrop: ${geoLink}`);
+    if (imageDescription) messageParts.push(`\nImage: ${imageDescription}`);
+    messageParts.push(`\n${HASHTAG}`);
+    messageParts.push(`Check out HegGeo: ${APP_LINK}`);
 
-    if (imageDataUri) {
-      let imageMessage = "\nI'm sharing a photo with this Geo";
-      if (aiDescription && aiDescription.trim()) {
-        imageMessage += `: "${aiDescription.trim()}"`;
-      } else {
-        imageMessage += ".";
-      }
-      imageMessage += "\n(I'll send the image in WhatsApp shortly!)";
-      messageParts.push(imageMessage);
-    }
-    
-    messageParts.push(`\n#HegGeo\nApp: https://heggeo.netlify.app`);
+    const fullMessage = messageParts.join('\n');
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`;
 
-    const finalMessage = messageParts.join('\n\n');
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(finalMessage)}`;
-    
     window.open(whatsappUrl, '_blank');
-    setDialogOpen(false); // Close dialog after attempting to share
+    setIsProcessing(false);
+    setIsOpen(false); // Close dialog after sharing
+    // Reset state after closing
+    setCustomMessage("");
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    stopCameraStream();
+  };
+  
+  useEffect(() => {
+    // Cleanup stream if component unmounts or dialog is closed
+    return () => {
+      stopCameraStream();
+    };
+  }, [stopCameraStream]);
+  
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) { 
+      stopCameraStream();
+      // Reset states when dialog closes to ensure fresh state on reopen
+      setCustomMessage("");
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setHasCameraPermission(null); // Reset camera permission status
+    }
   };
 
-  const handleDialogClose = (isOpen: boolean) => {
-    setDialogOpen(isOpen);
-    if (!isOpen) {
-      setCustomMessage("");
-      resetImageState();
-      setShowCamera(false); 
-    }
-  }
-
   return (
-    <>
-      <Button onClick={() => setDialogOpen(true)} variant="outline" className="w-full transition-all duration-300 ease-in-out transform hover:scale-105">
-        <Share2 className="mr-2 h-4 w-4" />
-        Share Geo via WhatsApp
-      </Button>
-
-      <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share Geo on WhatsApp</DialogTitle>
-            <DialogDescription>
-              Add a message and optionally a photo to share with your Geo.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="w-full" variant="secondary" size="default">
+          <Share2 className="mr-2 h-4 w-4" />
+          Share Geo
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>Share Geo on WhatsApp</DialogTitle>
+          <DialogDescription>
+            Add an optional message and photo to share with your Geo location.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+          <div className="grid gap-2">
+            <Label htmlFor="custom-message">Optional Message</Label>
             <Textarea
-              placeholder="Add an optional message..."
+              id="custom-message"
+              placeholder="E.g., Come join me here!"
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
               rows={3}
             />
-
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-            {!imageDataUri && !showCamera && (
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                  <ImageUp className="mr-2 h-4 w-4" /> Upload Photo
-                </Button>
-                <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-                <Button variant="outline" onClick={() => setShowCamera(true)}>
-                  <Camera className="mr-2 h-4 w-4" /> Use Camera
-                </Button>
-              </div>
-            )}
-
-            {showCamera && (
-              <div className="space-y-2">
-                <video ref={videoRef} autoPlay muted playsInline className="w-full aspect-video rounded-md bg-muted border" />
-                {hasCameraPermission === false && (
-                    <Alert variant="destructive">
-                        <AlertTitle>Camera Access Denied</AlertTitle>
-                        <AlertDescription>
-                        Please enable camera permissions in your browser settings to use this feature.
-                        </AlertDescription>
-                    </Alert>
-                )}
-                <div className="flex gap-2">
-                    <Button onClick={handleCapture} disabled={hasCameraPermission !== true} className="flex-1">Capture Photo</Button>
-                    <Button variant="outline" onClick={() => {setShowCamera(false); resetImageState();}} className="flex-1">Cancel</Button>
-                </div>
-              </div>
-            )}
-
-            {imageDataUri && !showCamera && (
-              <div className="space-y-3 pt-2">
-                <p className="text-sm font-medium">Photo Preview:</p>
-                <div className="flex justify-center">
-                    <img src={imageDataUri} alt="Selected preview" className="rounded-md max-h-40 w-auto border" />
-                </div>
-                
-                <Button variant="outline" size="sm" onClick={() => { resetImageState(); if (fileInputRef.current) fileInputRef.current.value = "";}} className="w-full">
-                  <Trash2 className="mr-2 h-4 w-4" /> Remove Photo
-                </Button>
-
-                {aiDescription === null ? ( // Show generate button only if not yet generated or explicitly cleared
-                    <Button onClick={handleGenerateDescription} disabled={isGeneratingDescription} className="w-full">
-                    {isGeneratingDescription && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Generate AI Description
-                    </Button>
-                ) : (
-                    <div className="space-y-1">
-                        <Label htmlFor="aiDescText">AI Description (editable):</Label>
-                        <Textarea 
-                            id="aiDescText"
-                            placeholder="AI description will appear here, or write your own."
-                            value={aiDescription}
-                            onChange={(e) => setAiDescription(e.target.value)}
-                            rows={3} 
-                        />
-                    </div>
-                )}
-              </div>
-            )}
+          </div>
+          <div className="grid gap-2">
+            <Label>Optional Photo</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={handleOpenCamera} className="flex-1">
+                <Camera className="mr-2 h-4 w-4" /> {isCameraOpen ? "Close Camera" : "Open Camera"}
+              </Button>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="flex-1">
+                <Paperclip className="mr-2 h-4 w-4" /> Upload Photo
+              </Button>
+              <Input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+              />
+            </div>
           </div>
 
-          <DialogFooter className="sm:justify-between gap-2">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
+          {isCameraOpen && (
+            <div className="space-y-2">
+              <div className="relative w-full aspect-video rounded-md bg-muted overflow-hidden">
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+              </div>
+              <Button onClick={handleCapturePhoto} className="w-full" disabled={!stream || !isCameraOpen}>
+                <Camera className="mr-2 h-4 w-4" /> Capture Photo
               </Button>
-            </DialogClose>
-            <Button type="button" onClick={handleFinalShare}>
-              <Share2 className="mr-2 h-4 w-4" /> Share on WhatsApp
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            </div>
+          )}
+           {hasCameraPermission === false && !isCameraOpen && (
+             <p className="text-sm text-destructive">Camera permission was denied. Please enable it in browser settings.</p>
+           )}
+          <canvas ref={canvasRef} className="hidden"></canvas>
+
+          {photoPreview && (
+            <div className="mt-2 space-y-1">
+              <Label>Photo Preview:</Label>
+              <div className="relative w-full h-auto max-h-[200px] rounded-md overflow-hidden border" data-ai-hint="photo preview placeholder">
+                <NextImage 
+                  src={photoPreview} 
+                  alt="Photo preview" 
+                  layout="responsive"
+                  width={400} 
+                  height={300} 
+                  objectFit="contain"
+                />
+              </div>
+            </div>
+          )}
+
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleShare} disabled={isProcessing}>
+            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+            Share
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
+
+    
