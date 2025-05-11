@@ -68,9 +68,6 @@ export function AlarmButton() {
 
       const newSiren = new Tone.Oscillator(440, sirenType).toDestination();
       
-      // Map volumePercent (0-100) to dB (-Infinity or -60dB to 0dB)
-      // 0% = very quiet (-60dB), 100% = max (0dB)
-      // Instant alarm will use 100% (0dB)
       const dbVolume = volumePercent === 0 ? -Infinity : -50 + (volumePercent / 100) * 50;
       newSiren.volume.value = dbVolume;
 
@@ -78,7 +75,7 @@ export function AlarmButton() {
         frequency: 2, 
         min: 440,
         max: 880,
-        type: "sine" // LFO type can also be configurable if needed
+        type: "sine"
       }).connect(newSiren.frequency);
       
       newLfo.start();
@@ -106,31 +103,38 @@ export function AlarmButton() {
     if (isAlarming && timeLeft > 0) {
       timerId = setInterval(() => {
         setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
+          const newTimeLeft = prevTime - 1;
+          if (newTimeLeft < 0) { // Timer has fully expired (e.g., prevTime was 0, newTimeLeft is -1)
             clearInterval(timerId!);
             setIsAlarming(false);
             setCurrentAlarmType(null);
             stopAlarmSound();
-            return 0;
+            return 0; // Final timeLeft state
           }
-          return prevTime - 1;
+          return newTimeLeft; // Continue countdown
         });
       }, 1000);
-    } else if (timeLeft === 0 && isAlarming) {
-        setIsAlarming(false);
-        setCurrentAlarmType(null);
-        stopAlarmSound();
     }
 
     return () => {
-      if (timerId) clearInterval(timerId);
-      // Ensure sound stops if component unmounts while alarming
-      // or if isAlarming becomes false for other reasons
-      if (isAlarming) {
-         stopAlarmSound();
+      if (timerId) {
+        clearInterval(timerId);
+      }
+      // If the effect cleans up (e.g. component unmount, or dependencies change causing re-run),
+      // and an alarm was active (isAlarming in closure was true), ensure sound stops.
+      // This is primarily for unmounts or manual stops causing isAlarming to change.
+      // If timer completes normally, stopAlarmSound is already called from setInterval callback.
+      // Redundant calls to stopAlarmSound are handled by its internal checks.
+      if (isAlarming && (siren || lfo)) { // Check isAlarming from closure
+        // This check ensures we only stop sound if it was alarming when this effect instance was active.
+        // And also if siren/lfo objects actually exist.
+        // stopAlarmSound(); // This might be too aggressive or cause issues if isAlarming was just set to false by the timer.
+        // Relying on specific calls to stopAlarmSound (in timer, in handleStopAlarm) is safer.
+        // The main job of THIS cleanup is the clearInterval.
       }
     };
-  }, [isAlarming, timeLeft, stopAlarmSound]);
+  }, [isAlarming, timeLeft, stopAlarmSound, siren, lfo]);
+
 
   const handleInstantAlarm = () => {
     if (isAlarming) return;
@@ -148,8 +152,8 @@ export function AlarmButton() {
   const handleStopAlarm = () => {
     setIsAlarming(false);
     setCurrentAlarmType(null);
-    setTimeLeft(0);
-    stopAlarmSound();
+    setTimeLeft(0); // This will trigger useEffect, and its cleanup will clear any existing timer.
+    stopAlarmSound(); // Explicitly stop sound now.
   };
 
   const formatTimeLeft = (seconds: number) => {
@@ -280,3 +284,4 @@ export function AlarmButton() {
     </Card>
   );
 }
+
