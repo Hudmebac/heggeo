@@ -1,6 +1,7 @@
+
 "use client";
 
-import type { Geo, UserLocation } from '@/lib/types';
+import type { Geo } from '@/lib/types'; // UserLocation removed as it's implicitly handled by useGeoLocation
 import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -8,6 +9,7 @@ import { GeoDropForm } from '@/components/GeoDropForm';
 import { ActiveGeoInfo } from '@/components/ActiveGeoInfo';
 import { MapDisplay } from '@/components/MapDisplay';
 import { AlarmButton } from '@/components/AlarmButton';
+import { JourneyTimeTracker } from '@/components/JourneyTimeTracker'; // Added JourneyTimeTracker
 import { useGeoLocation } from '@/hooks/useGeoLocation';
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,7 +68,6 @@ export default function HomePage() {
       longitude: userLocation.longitude,
       timestamp: Date.now(),
       lifespan,
-      // photoUrl: "https://picsum.photos/300/200" // Example photo for testing
     };
     setActiveGeo(newGeo);
     localStorage.setItem(ACTIVE_GEO_LOCAL_STORAGE_KEY, JSON.stringify(newGeo));
@@ -114,6 +115,7 @@ export default function HomePage() {
           <div className="space-y-6 md:space-y-8">
             <Skeleton className="h-64 w-full rounded-lg" />
             <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-56 w-full rounded-lg" /> {/* Skeleton for Journey Tracker */}
           </div>
           <div className="space-y-6 md:space-y-8">
             <Skeleton className="h-80 w-full rounded-lg" />
@@ -148,6 +150,7 @@ export default function HomePage() {
           {activeGeo && (
             <ActiveGeoInfo geo={activeGeo} />
           )}
+           <JourneyTimeTracker /> {/* Added JourneyTimeTracker component */}
         </div>
         <div className="space-y-6 md:space-y-8">
           <MapDisplay userLocation={userLocation} activeGeo={activeGeo} locationError={locationError} />

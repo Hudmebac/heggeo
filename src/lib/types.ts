@@ -12,6 +12,13 @@ export interface UserLocation {
   longitude: number;
 }
 
+export interface JourneyDetails {
+  distance: number; // in meters
+  duration: number; // in seconds
+  sourceName?: string;
+  destinationName?: string;
+}
+
 // It seems like Label might be needed by other components, 
 // adding its path here if it's considered a shared UI element type definition.
 // However, typically types.ts is for data structures.
