@@ -74,7 +74,7 @@ export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
         </div>
          <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground flex items-center gap-1">
-            <Clock className="h-4 w-4" />
+            <Timer className="h-4 w-4" /> {/* Replaced Clock with Timer */}
             Total Lifespan:
           </span>
           <span>{Math.round(geo.lifespan / (60 * 1000))} minutes</span>

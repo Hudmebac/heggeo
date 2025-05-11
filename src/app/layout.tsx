@@ -8,7 +8,7 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const orbitron = Orbitron({
+const orbitronFont = Orbitron({ // Renamed to avoid conflict with Orbitron component if any
   variable: '--font-orbitron',
   subsets: ['latin'],
   weight: ['400', '500', '700', '900'],
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${orbitron.variable} antialiased`}>
+      <body className={`${inter.variable} ${orbitronFont.variable} antialiased`}>
         {children}
         <Toaster />
       </body>
