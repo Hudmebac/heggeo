@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { calculateJourney } from '@/app/actions/locationIQActions';
+import { calculateJourneyWithNominatimAndOSRM } from '@/app/actions/journeyActions'; // Updated import
 import type { JourneyDetails } from '@/lib/types';
 import { Loader2, Navigation, Clock, Pin, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,8 @@ export function JourneyTimeTracker() {
     setError(null);
     setJourneyDetails(null);
 
-    const result = await calculateJourney(source, destination);
+    // Use the new action
+    const result = await calculateJourneyWithNominatimAndOSRM(source, destination);
 
     if ('error' in result) {
       setError(result.error);
@@ -63,7 +64,7 @@ export function JourneyTimeTracker() {
     let parts: string[] = [];
     if (hours > 0) parts.push(`${hours} hr`);
     if (minutes > 0) parts.push(`${minutes} min`);
-    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} sec`); // Show seconds if duration is very short or only seconds part exists
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} sec`); 
     
     return parts.join(' ');
   };
@@ -76,7 +77,7 @@ export function JourneyTimeTracker() {
           Journey Time Tracker
         </CardTitle>
         <CardDescription>
-          Calculate distance and travel duration. Enter addresses, place names, or search for landmarks.
+          Calculate distance and travel duration. Enter addresses, place names, or search for landmarks. Powered by OpenStreetMap.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -156,4 +157,3 @@ export function JourneyTimeTracker() {
     </Card>
   );
 }
-
