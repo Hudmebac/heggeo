@@ -101,4 +101,4 @@ This is a Next.js application.
 *   `src/hooks/`: Custom React hooks.
 *   `src/lib/`: Utility functions and type definitions.
 *   `public/`: Static assets.
-```
+# heggeo
