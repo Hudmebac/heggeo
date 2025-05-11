@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
-import { Geist_Sans } from 'next/font/google'; // Corrected import name
-import { Orbitron } from 'next/font/google';
+import { Inter, Orbitron } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist_Sans({ // Corrected usage
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
@@ -27,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${orbitron.variable} antialiased`}>
+      <body className={`${inter.variable} ${orbitron.variable} antialiased`}>
         {children}
         <Toaster />
       </body>

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Geo, UserLocation } from '@/lib/types';
-import { useState, useEffect, useCallback }_ from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { GeoDropForm } from '@/components/GeoDropForm';
