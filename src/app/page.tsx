@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Geo } from '@/lib/types'; // UserLocation removed as it's implicitly handled by useGeoLocation
+import type { Geo } from '@/lib/types';
 import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -9,7 +9,7 @@ import { GeoDropForm } from '@/components/GeoDropForm';
 import { ActiveGeoInfo } from '@/components/ActiveGeoInfo';
 import { MapDisplay } from '@/components/MapDisplay';
 import { AlarmButton } from '@/components/AlarmButton';
-import { JourneyTimeTracker } from '@/components/JourneyTimeTracker'; // Added JourneyTimeTracker
+import { JourneyTimeTracker } from '@/components/JourneyTimeTracker';
 import { useGeoLocation } from '@/hooks/useGeoLocation';
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -150,7 +150,7 @@ export default function HomePage() {
           {activeGeo && (
             <ActiveGeoInfo geo={activeGeo} />
           )}
-           <JourneyTimeTracker /> {/* Added JourneyTimeTracker component */}
+           <JourneyTimeTracker userLocation={userLocation} locationError={locationError} />
         </div>
         <div className="space-y-6 md:space-y-8">
           <MapDisplay userLocation={userLocation} activeGeo={activeGeo} locationError={locationError} />
