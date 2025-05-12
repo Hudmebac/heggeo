@@ -67,10 +67,14 @@ export default function RootLayout({
       <head>
         <ThemeInitializationScript />
       </head>
-      <body className={`${inter.variable} ${orbitronFont.variable} antialiased`}>
+      <body 
+        className={`${inter.variable} ${orbitronFont.variable} antialiased`}
+        suppressHydrationWarning // Added to mitigate browser extension issues
+      >
         {children}
         <Toaster />
       </body>
     </html>
   );
 }
+
