@@ -5,26 +5,29 @@ import { useState, useEffect } from 'react';
 import styles from './AnimatedHegGeoLogo.module.css';
 
 const TEXT_STAGES = [
-  "#HEGGEO",     // Initial
-  "#HEG  GEO",   // Space appears
-  "#HEG    GEO", // Space widens
-  "#HEg      GEO",// Case change 'G', space widens more
-  "#Heg      GEO",// Case change 'H'
-  "#Heg    GE",  // Space shrinks, 'O' disappears
-  "#Heg  Geo",   // Space shrinks, 'o' reappears lowercase
-  "#HegGeo"      // Final form
+  "#HEGGEO",
+  "#HEG  GEO",
+  "#HEG    GEO",
+  "#HEg      GEO",
+  "#Heg      GEO",
+  "#Heg    GEo",
+  "#Heg  Geo",
+  "#HegGeo",
+  "#HegGe",
+  "#HegG",
+  "#Heg",
+  "#He",
+  "#H",
+  "#HE",
+  "#HEG",
+  "#HEGG",
+  "#HEGGE",
+  "#HEGGEO", // Loops back to the start
 ];
 
-const STAGE_DURATIONS = [
-  2500, // #HEGGEO
-  800,  // #HEG  GEO
-  800,  // #HEG    GEO
-  800,  // #HEg      GEO
-  800,  // #Heg      GEO
-  800,  // #Heg    GE
-  1200, // #Heg  Geo
-  3000  // #HegGeo (final settle)
-];
+// Set all durations to 2000ms (2 seconds)
+const STAGE_DURATIONS = Array(TEXT_STAGES.length).fill(2000);
+
 
 const AnimatedHegGeoLogo = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,8 +40,9 @@ const AnimatedHegGeoLogo = () => {
     // Set animation class based on current stage
     if (currentIndex === 0) {
       setAnimationClass(styles.stage1); // Initial pulse for #HEGGEO
-    } else if (currentIndex === TEXT_STAGES.length - 1) {
-      setAnimationClass(styles.stage3); // Final settle for #HegGeo
+    } else if (currentIndex === TEXT_STAGES.length - 1) { 
+      // The last stage is a repeat of the first, so use fadeInAndSettle before it loops to pulse
+      setAnimationClass(styles.stage3); 
     } else {
       // Use burst animation for all intermediate transition stages
       setAnimationClass(styles.stage2); 
@@ -61,4 +65,3 @@ const AnimatedHegGeoLogo = () => {
 };
 
 export default AnimatedHegGeoLogo;
-
