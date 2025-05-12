@@ -17,14 +17,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, ChevronLeft, Twitter, Linkedin, ClipboardCopy, Pin as PinterestIcon } from 'lucide-react'; // Added social icons
+import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, LocateFixed, PlayCircle, Twitter, Linkedin, ClipboardCopy, Pin as PinterestIcon } from 'lucide-react'; 
 
 interface HowToModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
 
-// Constants defined in GeoDropForm, AlarmButton - ensure these are consistent if used directly
 const MIN_LIFESPAN_MINUTES = 5;
 const MAX_LIFESPAN_MINUTES = 120;
 const INSTANT_ALARM_DURATION_SECONDS = 20;
@@ -81,24 +80,24 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                         <li><strong>WhatsApp:</strong> Shares a pre-filled message.</li>
                         <li><strong><Twitter className="inline h-4 w-4" /> Twitter / X:</strong> Shares a concise message with link and hashtags.</li>
                         <li><strong><Linkedin className="inline h-4 w-4" /> LinkedIn:</strong> Shares an article-style post with your location details.</li>
-                        <li><strong><PinterestIcon className="inline h-4 w-4" /> Pinterest:</strong> Creates a pin with your map link and description.</li>
+                        <li><strong><PinterestIcon className="inline h-4 w-4" /> Pinterest:</strong> Creates a pin with your map link and description. (May require an image, app provides a placeholder).</li>
                         <li><strong><ClipboardCopy className="inline h-4 w-4" /> Copy to Clipboard:</strong> Copies the full message for manual pasting into other apps (like Instagram, TikTok, Snapchat, or email).</li>
                     </ul>
                   </li>
-                  <li>Review the pre-filled message preview (this preview is generic; the actual format may vary slightly by platform).</li>
+                  <li>Review the pre-filled message preview.</li>
                   <li>Click the 'Share to [Platform Name]' button in the dialog.</li>
                   <li>This will open the selected app/service (or copy the message). The message generally includes:
                     <ul className="list-disc list-inside ml-4">
                         <li>A greeting and statement about your location.</li>
-                        <li>The address of your Geo.</li>
+                        <li>The address of your Geo (if available) or coordinates.</li>
                         <li>Your custom message (if any).</li>
                         <li>A Google Maps link to your Geo's location.</li>
                         <li>The #HegGeo hashtag.</li>
                         <li>A link to the HegGeo application.</li>
                     </ul>
                   </li>
-                   <li>If you want to add a photo, you will need to do this manually in the chosen app after the share dialog opens it.</li>
-                   <li>For platforms like Instagram, TikTok, and Snapchat, use the "Copy to Clipboard" option, then open the app and paste the message, adding any media manually.</li>
+                   <li>If you want to add a photo or specific media, you will need to do this manually in the chosen app after the share dialog opens it (or after pasting if using "Copy to Clipboard").</li>
+                   <li>For platforms like Instagram, TikTok, and Snapchat that are media-first, use the "Copy to Clipboard" option, then open the app, create your post with media, and paste the message.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
@@ -152,7 +151,7 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
               </AccordionTrigger>
               <AccordionContent className="text-sm space-y-2 pl-2">
                 <p>Quickly send a pre-configured emergency message via WhatsApp using your default SOS settings.</p>
-                <p><strong><Settings2 className="inline h-4 w-4 text-primary" /> Managing SOS Configurations:</strong></p>
+                <p><strong><Settings className="inline h-4 w-4 text-primary" /> Managing SOS Configurations:</strong></p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Click the <Settings className="inline h-4 w-4" /> icon in the header, then select 'Configure SOS'.</li>
                   <li>In the dialog, you can manage multiple SOS configurations:
@@ -228,13 +227,3 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
     </Dialog>
   );
 }
-
-
-// Helper icons used in HowToModal that might not be globally available easily.
-const PlayCircle = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-);
-
-const LocateFixed = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg>
-);

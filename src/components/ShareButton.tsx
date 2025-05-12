@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Share2, Loader2, MapPin, Twitter, Linkedin, ClipboardCopy, Pin } from 'lucide-react'; // Added more icons
+import { Share2, Loader2, MapPin, Twitter, Linkedin, ClipboardCopy, Pin } from 'lucide-react';
 import { getAddressFromCoordinates } from '@/app/actions/shareActions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,7 +45,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
   const HASHTAG = "#HegGeo";
 
   const platformOptions: PlatformOption[] = [
-    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'whatsapp', label: 'WhatsApp' }, // Icon can be added if a WhatsApp Lucide icon exists or use a generic one
     { value: 'twitter', label: 'Twitter / X', icon: <Twitter className="h-4 w-4" /> },
     { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-4 w-4" /> },
     { value: 'pinterest', label: 'Pinterest', icon: <Pin className="h-4 w-4" /> },
@@ -94,6 +94,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
     
     const baseMessage = messageParts.join('\n');
     let shareUrl = "";
+    let platformName = platformOptions.find(p => p.value === selectedPlatform)?.label || 'Selected Platform';
 
     switch (selectedPlatform) {
       case 'whatsapp':
@@ -101,30 +102,19 @@ export function ShareButton({ geo }: ShareButtonProps) {
         window.open(shareUrl, '_blank');
         break;
       case 'twitter':
-        // Adjusted for Twitter's typical usage: Text first, then link. Hashtags usually at end.
-        // Twitter automatically shortens URLs.
         const twitterMessage = [
             `Hi, I'm at: ${locationText}`,
             customMessage.trim() ? `\n${customMessage.trim()}` : '',
             `\nLocation: ${geoLink}`,
             `\n${HASHTAG} #GeoDrop`,
             `\nvia ${APP_LINK}`
-        ].join('');
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterMessage.substring(0, 270))}`; // Keep it under typical limits
+        ].filter(Boolean).join('\n'); // filter(Boolean) removes empty lines if customMessage is empty
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterMessage.substring(0, 270))}`; 
         window.open(shareUrl, '_blank');
         break;
       case 'linkedin':
         const linkedInTitle = `My Current Location via HegGeo`;
-        const linkedInSummary = [
-          `Hi, I am sending my current Geo Location to you as this is where I am:`,
-          `${locationText}`,
-          customMessage.trim() ? `\n${customMessage.trim()}` : '',
-          `\nLink to location: ${geoLink}`,
-          `\n${HASHTAG}`,
-          `Check out HegGeo: ${APP_LINK}`
-        ].join('\n');
-        // LinkedIn prefers sharing a URL, title and summary are for that URL.
-        // We'll make the main shared URL the app link, and put geo details in summary.
+        const linkedInSummary = baseMessage;
         shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(APP_LINK)}&title=${encodeURIComponent(linkedInTitle)}&summary=${encodeURIComponent(linkedInSummary)}&source=${encodeURIComponent("HegGeo App")}`;
         window.open(shareUrl, '_blank');
         break;
@@ -133,9 +123,11 @@ export function ShareButton({ geo }: ShareButtonProps) {
           `My current location via HegGeo: ${locationText}.`,
           customMessage.trim() ? customMessage.trim() : '',
           HASHTAG
-        ].join(' ');
-        // Pinterest needs an image URL ideally. We'll share the Google Maps link and hope it can generate a preview.
-        shareUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(geoLink)}&description=${encodeURIComponent(pinterestDescription)}&media=${encodeURIComponent('https://picsum.photos/600/300?blur=2&random=' + Date.now())}`; // Added a random placeholder image
+        ].filter(Boolean).join(' ');
+        // Pinterest ideally needs an image URL. We'll use a placeholder.
+        // The map link itself could also be used as the 'media' if Pinterest can make a preview.
+        const placeholderImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${geo.latitude},${geo.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:G%7C${geo.latitude},${geo.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY_HERE`; // Replace with actual key if available or remove if not allowed
+        shareUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(geoLink)}&description=${encodeURIComponent(pinterestDescription)}&media=${encodeURIComponent(placeholderImageUrl)}`; 
         window.open(shareUrl, '_blank');
         break;
       case 'copy':
@@ -154,8 +146,8 @@ export function ShareButton({ geo }: ShareButtonProps) {
 
     if (selectedPlatform !== 'copy') {
       toast({
-        title: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Opened`,
-        description: "Your message is ready. Add a photo in the app if you wish, then send it!",
+        title: `${platformName} Opened`,
+        description: "Your message is ready. Add media in the app if you wish, then send it!",
       });
     }
     setIsProcessing(false);
@@ -195,7 +187,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
         <DialogHeader>
           <DialogTitle>Share Geo</DialogTitle>
           <DialogDescription>
-            Craft your optional message. Review the preview. If you want to add a photo, do this in the chosen app.
+            Craft your Optional message. Review Message, If you want to add photo do this in the chosen app. Straight after sending Geo.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
@@ -239,7 +231,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
           </div>
           
           <div className="space-y-2 pt-2 border-t">
-            <Label>Message Preview (generic for WhatsApp/Copy):</Label>
+            <Label>Message Preview:</Label>
             <div className="text-xs p-2 border rounded-md bg-muted/50 whitespace-pre-wrap break-words">
               {constructPreviewMessage()}
             </div>
@@ -260,3 +252,4 @@ export function ShareButton({ geo }: ShareButtonProps) {
     </Dialog>
   );
 }
+

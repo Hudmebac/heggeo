@@ -4,7 +4,6 @@ export interface Geo {
   longitude: number;
   timestamp: number; // Creation timestamp
   lifespan: number; // Lifespan in milliseconds. Can be Infinity for no expiry. (JSON.stringify(Infinity) results in null)
-  photoUrl?: string; // Optional photo URL for sharing (Note: ShareButton now handles ad-hoc photo sharing separately)
 }
 
 export interface UserLocation {
