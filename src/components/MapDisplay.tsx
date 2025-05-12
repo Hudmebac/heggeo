@@ -2,7 +2,7 @@
 "use client";
 
 import type { Geo, UserLocation } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // Added useState
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { GoogleMap, LoadScriptNext, Marker } from '@react-google-maps/api';
@@ -23,6 +23,7 @@ export function MapDisplay({ userLocation, activeGeo, locationError }: MapDispla
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const [mapZoom, setMapZoom] = useState<number>(2);
+  const [mapLoadError, setMapLoadError] = useState<string | null>(null); // New state for script load errors
 
   useEffect(() => {
     if (activeGeo) {
@@ -58,14 +59,37 @@ export function MapDisplay({ userLocation, activeGeo, locationError }: MapDispla
           <div className="flex flex-col items-center justify-center h-80 bg-muted/50 rounded-md border border-dashed p-4">
             <AlertTriangle className="h-10 w-10 text-destructive mb-2" />
             <p className="text-destructive text-center font-semibold">Google Maps API Key Missing</p>
-            <p className="text-center text-sm text-muted-foreground">Please configure the Google Maps API key to display the map.</p>
+            <p className="text-center text-sm text-muted-foreground">Please configure the Google Maps API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) in your environment variables to display the map.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Display error if map script loading failed
+  if (mapLoadError) {
+    return (
+      <Card className="w-full shadow-lg">
+        <CardHeader>
+          <CardTitle className="font-orbitron uppercase tracking-wide flex items-center gap-2">
+            {cardTitleIcon}
+            Interactive Map
+          </CardTitle>
+          <CardDescription>View your location and active Geos.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-80 bg-muted/50 rounded-md border border-dashed p-4">
+            <AlertTriangle className="h-10 w-10 text-destructive mb-2" />
+            <p className="text-destructive text-center font-semibold">Map Error</p>
+            <p className="text-center text-sm text-muted-foreground">{mapLoadError}</p>
           </div>
         </CardContent>
       </Card>
     );
   }
   
-  if (locationError && !userLocation && !activeGeo) {
+  // Display locationError if present and no map data can be shown yet and no other errors
+  if (locationError && !userLocation && !activeGeo && !mapLoadError) {
      return (
       <Card className="w-full shadow-lg">
         <CardHeader>
@@ -101,7 +125,10 @@ export function MapDisplay({ userLocation, activeGeo, locationError }: MapDispla
         <LoadScriptNext
           googleMapsApiKey={googleMapsApiKey}
           loadingElement={<Skeleton className="w-full h-80 rounded-md" />}
-          onError={() => console.error("Google Maps script failed to load.")}
+          onError={(error) => {
+            console.error("Google Maps script failed to load.", error);
+            setMapLoadError("The map script could not be loaded. Please check the browser console for more details and verify your API key settings in Google Cloud Console.");
+          }}
         >
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
@@ -112,34 +139,44 @@ export function MapDisplay({ userLocation, activeGeo, locationError }: MapDispla
               mapTypeControl: false,
               fullscreenControl: false,
             }}
+            // Optional: Add an onLoad handler for the map itself if needed
+            // onLoad={() => console.log("GoogleMap component loaded")}
+            // Optional: Add an onUnmount handler
+            // onUnmount={() => console.log("GoogleMap component unmounted")}
           >
             {userLocation && (
               <Marker 
                 position={{ lat: userLocation.latitude, lng: userLocation.longitude }}
                 title="Your Location" 
-                // Default Google Maps marker for user location
               />
             )}
             {activeGeo && (
               <Marker 
                 position={{ lat: activeGeo.latitude, lng: activeGeo.longitude }} 
                 title="Active Geo"
-                // Default Google Maps marker for active Geo
               />
             )}
           </GoogleMap>
         </LoadScriptNext>
         {locationError && (userLocation || activeGeo) && (
             <p className="text-destructive text-xs mt-2 text-center">
-              Note: {locationError} Your current location could not be determined.
+              Note: {locationError} Your current location could not be determined. Map may be centered on last known Geo.
             </p>
         )}
-         {!locationError && !userLocation && !activeGeo && ( // If no error, no locations, but API key IS present and maps script loaded
+         {!locationError && !userLocation && !activeGeo && !mapLoadError && ( 
+          // If no error, no locations, but API key IS present and maps script loaded (or at least no error from LoadScriptNext)
+          // This state means GoogleMap should be trying to render. If it shows "Oops", it's a Google-side issue.
+          // The h-80 here refers to the container for LoadScriptNext, which itself has a loadingElement.
+          // If LoadScriptNext is still loading, its Skeleton will show. If it has loaded but GoogleMap is blank/error,
+          // this message might not be visible if GoogleMap fills the space.
+          // This state is unlikely to be hit if GoogleMap is correctly rendering its own error.
           <div className="w-full h-80 rounded-md flex items-center justify-center bg-muted/10 border border-dashed">
-            <p className="text-muted-foreground text-sm">Map loaded. Waiting for location data...</p>
+             {/* This message is a fallback; typically Google's own error message will appear if script loads but map init fails. */}
+            <p className="text-muted-foreground text-sm text-center">Map initializing... If it fails to load, check your API key and console.</p>
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
+
