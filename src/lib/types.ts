@@ -3,7 +3,7 @@ export interface Geo {
   latitude: number;
   longitude: number;
   timestamp: number; // Creation timestamp
-  lifespan: number; // Lifespan in milliseconds
+  lifespan: number; // Lifespan in milliseconds. Can be Infinity for no expiry. (JSON.stringify(Infinity) results in null)
   photoUrl?: string; // Optional photo URL for sharing (Note: ShareButton now handles ad-hoc photo sharing separately)
 }
 
@@ -30,3 +30,4 @@ export interface SOSSetting {
   defaultSituation: string; // Default message for "WHAT" part, e.g., "in Distress, need help"
   isDefault: boolean; // Whether this is the default SOS configuration to use
 }
+

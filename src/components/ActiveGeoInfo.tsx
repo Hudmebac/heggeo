@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Geo } from '@/lib/types';
@@ -12,6 +13,7 @@ interface ActiveGeoInfoProps {
 }
 
 function formatTime(ms: number): string {
+  if (ms === Infinity) return "No Expiry";
   if (ms <= 0) return "Expired";
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -23,6 +25,11 @@ export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
+    if (geo.lifespan === Infinity) {
+      setTimeLeft(Infinity);
+      return () => {}; // No interval needed for indefinite Geo
+    }
+
     const calculateTimeLeft = () => {
       const endTime = geo.timestamp + geo.lifespan;
       const diff = endTime - Date.now();
@@ -77,10 +84,13 @@ export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
             <Timer className="h-4 w-4" /> {/* Replaced Clock with Timer */}
             Total Lifespan:
           </span>
-          <span>{Math.round(geo.lifespan / (60 * 1000))} minutes</span>
+          <span>
+            {geo.lifespan === Infinity ? "Indefinite" : `${Math.round(geo.lifespan / (60 * 1000))} minutes`}
+          </span>
         </div>
         <ShareButton geo={geo} />
       </CardContent>
     </Card>
   );
 }
+

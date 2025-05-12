@@ -50,13 +50,14 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                 <MapPin className="mr-2 h-5 w-5 text-primary" /> GeoDropping
               </AccordionTrigger>
               <AccordionContent className="text-sm space-y-2 pl-2">
-                <p>Mark your current location with a temporary 'Geo'.</p>
+                <p>Mark your current location with a temporary 'Geo'. The default lifespan is 60 minutes.</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Your current location is detected automatically. If not, ensure location services are enabled in your browser and for this site.</li>
-                  <li>Use the 'Geo Lifespan' slider to set how long your Geo will be active (from {MIN_LIFESPAN_MINUTES} to {MAX_LIFESPAN_MINUTES} minutes).</li>
+                  <li>Use the 'Geo Lifespan' slider to set how long your Geo will be active (from {MIN_LIFESPAN_MINUTES} to {MAX_LIFESPAN_MINUTES} minutes). The default is 60 minutes.</li>
+                  <li>Alternatively, check the "No Lifespan" box if you want the Geo to remain active until you manually clear it. This will disable the slider.</li>
                   <li>Click the 'Drop Geo' button.</li>
                   <li>Your active Geo will appear on the map placeholder and its details will be shown in the 'Active Geo' card below the form.</li>
-                  <li>To remove an active Geo before it expires, click 'Clear Active Geo'.</li>
+                  <li>To remove an active Geo before it expires (or if it has no expiry), click 'Clear Active Geo'.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
@@ -69,7 +70,7 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                 <p>View details of your active Geo and share it with others.</p>
                 <p><strong>Viewing Active Geo:</strong></p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Once a Geo is dropped, its details (time remaining, coordinates, drop time, total lifespan) are displayed in the 'Active Geo' card.</li>
+                  <li>Once a Geo is dropped, its details (time remaining, coordinates, drop time, total lifespan) are displayed in the 'Active Geo' card. If "No Lifespan" was selected, time remaining and total lifespan will show "No Expiry" or "Indefinite".</li>
                 </ul>
                 <p className="mt-2"><strong>Sharing on WhatsApp:</strong></p>
                 <ol className="list-decimal list-inside space-y-1">
@@ -98,7 +99,7 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
               <AccordionContent className="text-sm space-y-2 pl-2">
                 <p>Calculate estimated driving distance and travel time between two locations.</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li><strong>Source Location:</strong> Enter an address, place name, or coordinates (e.g., "40.7128,-74.0060"). Alternatively, click the <LocateFixed className="inline h-4 w-4" /> icon to use your current location (if available).</li>
+                  <li><strong>Source Location:</strong> Enter an address, place name, postcode, or coordinates (e.g., "40.7128,-74.0060"). Alternatively, click the <LocateFixed className="inline h-4 w-4" /> icon to use your current location (if available).</li>
                   <li><strong>Destination Location:</strong> Enter details similarly for the destination, or use the <LocateFixed className="inline h-4 w-4" /> icon.</li>
                   <li>Click 'Calculate Journey'.</li>
                   <li>The results, including identified source/destination names, distance (km/meters), and estimated duration (hours/minutes/seconds), will be displayed.</li>
@@ -226,4 +227,5 @@ const PlayCircle = (props: React.SVGProps<SVGSVGElement>) => (
 const LocateFixed = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg>
 );
+
 

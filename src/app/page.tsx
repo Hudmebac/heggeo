@@ -30,12 +30,17 @@ export default function HomePage() {
     const storedGeoString = localStorage.getItem(ACTIVE_GEO_LOCAL_STORAGE_KEY);
     if (storedGeoString) {
       try {
-        const storedGeo = JSON.parse(storedGeoString) as Geo;
-        // Check if Geo is expired
-        if (storedGeo.timestamp + storedGeo.lifespan > Date.now()) {
-          setActiveGeo(storedGeo);
-        } else {
+        const storedGeo = JSON.parse(storedGeoString) as Geo & { lifespan: number | null }; // Lifespan can be null if Infinity was stored
+        
+        if (storedGeo.lifespan === null) { // Convert null back to Infinity
+          storedGeo.lifespan = Infinity;
+        }
+
+        // Check if Geo is expired (unless lifespan is Infinity)
+        if (storedGeo.lifespan !== Infinity && storedGeo.timestamp + storedGeo.lifespan <= Date.now()) {
           localStorage.removeItem(ACTIVE_GEO_LOCAL_STORAGE_KEY); // Clear expired Geo
+        } else {
+          setActiveGeo(storedGeo as Geo);
         }
       } catch (e) {
         console.error("Error parsing stored Geo:", e);
@@ -44,7 +49,7 @@ export default function HomePage() {
     }
   }, []);
 
-  const handleDropGeo = useCallback((lifespan: number) => {
+  const handleDropGeo = useCallback((lifespan: number) => { // lifespan can be Infinity
     if (!userLocation) {
       toast({
         title: "Location Error",
@@ -67,13 +72,15 @@ export default function HomePage() {
       latitude: userLocation.latitude,
       longitude: userLocation.longitude,
       timestamp: Date.now(),
-      lifespan,
+      lifespan, // Can be Infinity
     };
     setActiveGeo(newGeo);
-    localStorage.setItem(ACTIVE_GEO_LOCAL_STORAGE_KEY, JSON.stringify(newGeo));
+    localStorage.setItem(ACTIVE_GEO_LOCAL_STORAGE_KEY, JSON.stringify(newGeo)); // Infinity will be stringified to null
     toast({
       title: "Geo Dropped!",
-      description: `Your Geo is now active for ${Math.round(lifespan / (60 * 1000))} minutes.`,
+      description: lifespan === Infinity 
+        ? "Your Geo is now active indefinitely." 
+        : `Your Geo is now active for ${Math.round(lifespan / (60 * 1000))} minutes.`,
     });
   }, [userLocation, activeGeo, toast]);
 
@@ -91,7 +98,8 @@ export default function HomePage() {
     if (!activeGeo) return;
 
     const checkExpiration = () => {
-      if (activeGeo.timestamp + activeGeo.lifespan <= Date.now()) {
+      // Only check expiration if lifespan is not Infinity
+      if (activeGeo.lifespan !== Infinity && activeGeo.timestamp + activeGeo.lifespan <= Date.now()) {
         handleClearGeo();
         toast({
           title: "Geo Expired",
@@ -100,10 +108,18 @@ export default function HomePage() {
       }
     };
 
-    const intervalId = setInterval(checkExpiration, 1000 * 30); // Check every 30 seconds
-    checkExpiration(); // Initial check
+    // If lifespan is not Infinity, set up interval for checking
+    let intervalId: NodeJS.Timeout | undefined = undefined;
+    if (activeGeo.lifespan !== Infinity) {
+      intervalId = setInterval(checkExpiration, 1000 * 30); // Check every 30 seconds
+      checkExpiration(); // Initial check
+    }
 
-    return () => clearInterval(intervalId);
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [activeGeo, handleClearGeo, toast]);
 
 
@@ -161,3 +177,4 @@ export default function HomePage() {
     </div>
   );
 }
+
