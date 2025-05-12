@@ -45,7 +45,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
   const HASHTAG = "#HegGeo";
 
   const platformOptions: PlatformOption[] = [
-    { value: 'whatsapp', label: 'WhatsApp' }, // Icon can be added if a WhatsApp Lucide icon exists or use a generic one
+    { value: 'whatsapp', label: 'WhatsApp' },
     { value: 'twitter', label: 'Twitter / X', icon: <Twitter className="h-4 w-4" /> },
     { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-4 w-4" /> },
     { value: 'pinterest', label: 'Pinterest', icon: <Pin className="h-4 w-4" /> },
@@ -55,7 +55,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
   useEffect(() => {
     if (isOpen && geo) {
       setIsFetchingAddress(true);
-      setGeoAddress(null);
+      setGeoAddress(null); // Reset before fetching
       getAddressFromCoordinates(geo.latitude, geo.longitude)
         .then(address => {
           setGeoAddress(address || `Coordinates: ${geo.latitude.toFixed(4)}, ${geo.longitude.toFixed(4)}`);
@@ -68,8 +68,9 @@ export function ShareButton({ geo }: ShareButtonProps) {
           setIsFetchingAddress(false);
         });
     } else if (!isOpen) {
+      // Reset state when dialog closes
       setCustomMessage("");
-      setGeoAddress(null);
+      setGeoAddress(null); 
       setIsFetchingAddress(false);
       setSelectedPlatform('whatsapp'); // Reset to default
     }
@@ -108,7 +109,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
             `\nLocation: ${geoLink}`,
             `\n${HASHTAG} #GeoDrop`,
             `\nvia ${APP_LINK}`
-        ].filter(Boolean).join('\n'); // filter(Boolean) removes empty lines if customMessage is empty
+        ].filter(Boolean).join('\n');
         shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterMessage.substring(0, 270))}`; 
         window.open(shareUrl, '_blank');
         break;
@@ -124,9 +125,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
           customMessage.trim() ? customMessage.trim() : '',
           HASHTAG
         ].filter(Boolean).join(' ');
-        // Pinterest ideally needs an image URL. We'll use a placeholder.
-        // The map link itself could also be used as the 'media' if Pinterest can make a preview.
-        const placeholderImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${geo.latitude},${geo.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:G%7C${geo.latitude},${geo.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY_HERE`; // Replace with actual key if available or remove if not allowed
+        const placeholderImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${geo.latitude},${geo.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:G%7C${geo.latitude},${geo.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`; // Replace with actual key if available or remove 
         shareUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(geoLink)}&description=${encodeURIComponent(pinterestDescription)}&media=${encodeURIComponent(placeholderImageUrl)}`; 
         window.open(shareUrl, '_blank');
         break;
