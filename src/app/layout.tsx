@@ -46,7 +46,7 @@ const ThemeInitializationScript = () => (
           // if (systemPrefersDark) return 'dark';
 
           return 'light'; // Default theme
-        }
+        }        
         const theme = getInitialTheme();
         const root = document.documentElement;
         root.classList.remove('light', 'dark', 'hc-light', 'hc-dark'); // Clear any existing
@@ -54,7 +54,7 @@ const ThemeInitializationScript = () => (
             root.classList.add(theme);
         }
         // console.log('Initial theme applied by script:', theme);
-      })();
+      })();    
     `)}
   />
 );
