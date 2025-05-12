@@ -4,8 +4,27 @@
 import { useState, useEffect } from 'react';
 import styles from './AnimatedHegGeoLogo.module.css';
 
-const TEXT_STAGES = ["#HEGGEO", "#Heg Geo", "#HegGeo"];
-const STAGE_DURATIONS = [3000, 2500, 3500]; // Durations for each text/animation stage in ms
+const TEXT_STAGES = [
+  "#HEGGEO",     // Initial
+  "#HEG  GEO",   // Space appears
+  "#HEG    GEO", // Space widens
+  "#HEg      GEO",// Case change 'G', space widens more
+  "#Heg      GEO",// Case change 'H'
+  "#Heg    GE",  // Space shrinks, 'O' disappears
+  "#Heg  Geo",   // Space shrinks, 'o' reappears lowercase
+  "#HegGeo"      // Final form
+];
+
+const STAGE_DURATIONS = [
+  2500, // #HEGGEO
+  800,  // #HEG  GEO
+  800,  // #HEG    GEO
+  800,  // #HEg      GEO
+  800,  // #Heg      GEO
+  800,  // #Heg    GE
+  1200, // #Heg  Geo
+  3000  // #HegGeo (final settle)
+];
 
 const AnimatedHegGeoLogo = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -13,16 +32,16 @@ const AnimatedHegGeoLogo = () => {
   const [animationClass, setAnimationClass] = useState(styles.stage1);
 
   useEffect(() => {
-    // Update text first
     setCurrentText(TEXT_STAGES[currentIndex]);
 
-    // Then set animation class based on current text/stage
-    if (TEXT_STAGES[currentIndex] === "#HEGGEO") {
-      setAnimationClass(styles.stage1); // Pulsing
-    } else if (TEXT_STAGES[currentIndex] === "#Heg Geo") {
-      setAnimationClass(styles.stage2); // Bursting
+    // Set animation class based on current stage
+    if (currentIndex === 0) {
+      setAnimationClass(styles.stage1); // Initial pulse for #HEGGEO
+    } else if (currentIndex === TEXT_STAGES.length - 1) {
+      setAnimationClass(styles.stage3); // Final settle for #HegGeo
     } else {
-      setAnimationClass(styles.stage3); // Refining
+      // Use burst animation for all intermediate transition stages
+      setAnimationClass(styles.stage2); 
     }
 
     const timer = setTimeout(() => {
@@ -42,3 +61,4 @@ const AnimatedHegGeoLogo = () => {
 };
 
 export default AnimatedHegGeoLogo;
+
