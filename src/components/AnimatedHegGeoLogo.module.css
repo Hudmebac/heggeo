@@ -3,54 +3,31 @@
   position: relative;
   display: inline-block;
   /* Base color is set via primary text color in Header for Link, but can be overridden if needed */
-  /* color: hsl(var(--primary)); */ 
+  /* color: hsl(var(--primary)); */
 }
 
 .animatedText {
   display: inline-block;
   position: relative;
   z-index: 1;
-  font-weight: bold; /* Ensure font is bold for text-shadow to look substantial */
+  font-weight: bold; /* Ensure font is bold */
   color: hsl(var(--primary)); /* Use theme's primary color, which is orange */
   transition: opacity 0.3s ease-in-out; /* For smooth text changes if ever needed */
 }
 
-/* Stage 1: #HEGGEO - Pulsing energy, flickering embers */
+/* Stage 1: #HEGGEO - Pulsing */
 .stage1 {
-  animation: pulse 1.5s infinite ease-in-out, emberFlicker 0.15s infinite alternate;
-  text-shadow:
-    0 0 2px #fff, /* Inner sharp highlight */
-    0 0 5px #FFD700, /* Gold */
-    0 0 10px #FFA500, /* Orange */
-    0 0 15px #FF8C00, /* DarkOrange */
-    0 0 20px #FF4500, /* OrangeRed */
-    0 0 25px #FF0000; /* Red for outer glow */
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
-/* Stage 2: #Heg Geo - Flames burst outward, swirling tendrils (stylized) */
+/* Stage 2: #Heg Geo - Bursting effect */
 .stage2 {
-  animation: burst 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards, fireCrackle 0.1s infinite alternate;
-  text-shadow: /* More intense and expansive glow for burst */
-    0 0 3px #fff,
-    0 0 8px #FFEFB3, /* Light yellow */
-    0 0 15px #FFD700,
-    0 0 25px #FFA500,
-    0 0 35px #FF8C00,
-    0 0 45px #FF4500,
-    0 0 55px #FF0000,
-    0 0 70px #B22222; /* Firebrick for deeper red */
+  animation: burst 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
 }
 
-/* Stage 3: #HegGeo - Controlled, powerful, streaks of flame twisting (stylized), refined glow */
+/* Stage 3: #HegGeo - Fade in and settle */
 .stage3 {
-  animation: refineGlow 2s ease-in-out infinite alternate, subtleFlameMovement 0.25s infinite;
-  text-shadow:
-    0 0 3px #fff,
-    0 0 7px #FFD700,
-    0 0 14px #FFA500,
-    0 0 20px #FF8C00,
-    0 0 28px #FF4500,
-    0 0 35px #FF0000; /* Stable strong glow */
+  animation: fadeInAndSettle 1s ease-out forwards;
 }
 
 
@@ -58,78 +35,46 @@
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
-    filter: brightness(100%) saturate(100%);
+    opacity: 0.9;
   }
   50% {
     transform: scale(1.03);
-    filter: brightness(110%) saturate(120%);
+    opacity: 1;
   }
-}
-
-@keyframes emberFlicker {
-  0% { filter: brightness(100%) contrast(100%); }
-  100% { filter: brightness(90%) contrast(110%) hue-rotate(5deg); }
 }
 
 @keyframes burst {
   0% {
     transform: scale(0.9);
-    opacity: 0.8;
-    filter: brightness(100%) saturate(100%);
+    opacity: 0.7;
   }
   50% {
     transform: scale(1.15);
     opacity: 1;
-    filter: brightness(180%) saturate(200%) contrast(150%);
   }
   100% {
     transform: scale(1.05); /* Settle slightly larger */
     opacity: 1;
-    filter: brightness(120%) saturate(130%);
   }
 }
 
-@keyframes fireCrackle {
-  0% { filter: brightness(130%) contrast(120%) hue-rotate(-3deg) saturate(150%); }
-  100% { filter: brightness(110%) contrast(100%) hue-rotate(3deg) saturate(130%); }
-}
-
-
-@keyframes refineGlow {
-  from {
-    filter: brightness(100%) saturate(100%);
-    text-shadow:
-      0 0 3px #fff,
-      0 0 7px #FFD700,
-      0 0 14px #FFA500,
-      0 0 20px #FF8C00,
-      0 0 28px #FF4500,
-      0 0 35px #FF0000;
+@keyframes fadeInAndSettle {
+  0% {
+    opacity: 0;
+    transform: scale(0.90) translateY(5px);
   }
-  to {
-    filter: brightness(115%) saturate(125%);
-    text-shadow:
-      0 0 4px #fff,
-      0 0 9px #FFD700, /* Slightly larger and brighter gold */
-      0 0 18px #FFA500, /* Brighter orange */
-      0 0 25px #FF8C00, 
-      0 0 33px #FF4500,
-      0 0 40px #FF0000, /* More intense red edge */
-      0 0 50px #B22222; /* Deeper red aura */
+  70% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0px);
   }
-}
-
-@keyframes subtleFlameMovement {
-  0% { filter: hue-rotate(0deg) brightness(105%) contrast(105%); }
-  50% { filter: hue-rotate(3deg) brightness(100%) contrast(100%); }
-  100% { filter: hue-rotate(-3deg) brightness(105%) contrast(105%); }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0px);
+  }
 }
 
 /* 
-  To achieve "swirling tendrils" or "streaks of flame" as described would typically require
-  SVG animations or a canvas implementation for particle effects.
-  This CSS approach uses text-shadows and filter animations to create a stylized
-  fire aura and energy effects that evoke the described intensity and dynamism.
-  The `filter` property is used for brightness, contrast, saturation, and hue rotation
-  to simulate flickering and energetic movement of light.
+  Removed text-shadows and complex filter animations to eliminate the "fire aura".
+  Animations are simplified to focus on transformations (scale, opacity, translate)
+  to maintain dynamic text evolution without the glow effects.
 */
