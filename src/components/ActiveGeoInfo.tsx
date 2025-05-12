@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Timer, MapPin, CalendarClock } from 'lucide-react';
 import { ShareButton } from './ShareButton';
+import { getAddressFromCoordinates } from '@/app/actions/shareActions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ActiveGeoInfoProps {
   geo: Geo;
@@ -23,28 +25,47 @@ function formatTime(ms: number): string {
 
 export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [geoAddress, setGeoAddress] = useState<string | null>(null);
+  const [isFetchingAddress, setIsFetchingAddress] = useState<boolean>(false);
 
   useEffect(() => {
     if (geo.lifespan === Infinity) {
       setTimeLeft(Infinity);
-      return () => {}; // No interval needed for indefinite Geo
+      // No interval needed for indefinite Geo
+    } else {
+      const calculateTimeLeft = () => {
+        const endTime = geo.timestamp + geo.lifespan;
+        const diff = endTime - Date.now();
+        setTimeLeft(diff > 0 ? diff : 0);
+      };
+
+      calculateTimeLeft();
+      const intervalId = setInterval(calculateTimeLeft, 1000);
+      return () => clearInterval(intervalId);
     }
+  }, [geo.timestamp, geo.lifespan]);
 
-    const calculateTimeLeft = () => {
-      const endTime = geo.timestamp + geo.lifespan;
-      const diff = endTime - Date.now();
-      setTimeLeft(diff > 0 ? diff : 0);
-    };
-
-    calculateTimeLeft();
-    const intervalId = setInterval(calculateTimeLeft, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [geo]);
+  useEffect(() => {
+    if (geo) {
+      setIsFetchingAddress(true);
+      setGeoAddress(null);
+      getAddressFromCoordinates(geo.latitude, geo.longitude)
+        .then(address => {
+          setGeoAddress(address || `Coordinates: ${geo.latitude.toFixed(4)}, ${geo.longitude.toFixed(4)}`);
+        })
+        .catch(error => {
+          console.error("Error fetching address for ActiveGeoInfo:", error);
+          setGeoAddress(`Error fetching address for ${geo.latitude.toFixed(4)}, ${geo.longitude.toFixed(4)}`);
+        })
+        .finally(() => {
+          setIsFetchingAddress(false);
+        });
+    }
+  }, [geo.latitude, geo.longitude]); // Rerun if geo coordinates change
 
   if (!geo) return null;
 
-  const creationDate = new Date(geo.timestamp).toLocaleTimeString();
+  const creationDate = new Date(geo.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <Card className="w-full shadow-lg">
@@ -70,7 +91,11 @@ export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
             <MapPin className="h-4 w-4" />
             Location:
           </span>
-          <span>{geo.latitude.toFixed(4)}, {geo.longitude.toFixed(4)}</span>
+          {isFetchingAddress ? (
+            <Skeleton className="h-4 w-3/5" />
+          ) : (
+            <span className="text-right break-words">{geoAddress || "N/A"}</span>
+          )}
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground flex items-center gap-1">
@@ -81,7 +106,7 @@ export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
         </div>
          <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground flex items-center gap-1">
-            <Timer className="h-4 w-4" /> {/* Replaced Clock with Timer */}
+            <Timer className="h-4 w-4" />
             Total Lifespan:
           </span>
           <span>
@@ -93,4 +118,3 @@ export function ActiveGeoInfo({ geo }: ActiveGeoInfoProps) {
     </Card>
   );
 }
-
