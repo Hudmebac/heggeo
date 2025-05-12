@@ -17,7 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, LocateFixed, PlayCircle, Twitter, Linkedin, ClipboardCopy, Pin as PinterestIcon } from 'lucide-react'; 
+import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, LocateFixed, PlayCircle, Twitter, Linkedin, ClipboardCopy, Pin as PinterestIcon, Facebook } from 'lucide-react'; 
 
 interface HowToModalProps {
   isOpen: boolean;
@@ -78,9 +78,10 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                   <li>Select your desired sharing platform from the dropdown (default is WhatsApp). Options include:
                     <ul className="list-disc list-inside ml-4">
                         <li><strong>WhatsApp:</strong> Shares a pre-filled message.</li>
+                        <li><strong><Facebook className="inline h-4 w-4" /> Facebook:</strong> Shares a link to your location. You can add your own text in the Facebook share dialog.</li>
                         <li><strong><Twitter className="inline h-4 w-4" /> Twitter / X:</strong> Shares a concise message with link and hashtags.</li>
                         <li><strong><Linkedin className="inline h-4 w-4" /> LinkedIn:</strong> Shares an article-style post with your location details.</li>
-                        <li><strong><PinterestIcon className="inline h-4 w-4" /> Pinterest:</strong> Creates a pin with your map link and description. (May require an image, app provides a placeholder).</li>
+                        <li><strong><PinterestIcon className="inline h-4 w-4" /> Pinterest:</strong> Creates a pin with your map link and description. Pinterest will attempt to find an image from the shared link, or you can add one.</li>
                         <li><strong><ClipboardCopy className="inline h-4 w-4" /> Copy to Clipboard:</strong> Copies the full message for manual pasting into other apps (like Instagram, TikTok, Snapchat, or email).</li>
                     </ul>
                   </li>
@@ -227,3 +228,4 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
     </Dialog>
   );
 }
+

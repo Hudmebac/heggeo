@@ -30,4 +30,4 @@ export interface SOSSetting {
   isDefault: boolean; // Whether this is the default SOS configuration to use
 }
 
-export type SharePlatform = 'whatsapp' | 'twitter' | 'linkedin' | 'pinterest' | 'copy';
+export type SharePlatform = 'whatsapp' | 'twitter' | 'linkedin' | 'pinterest' | 'facebook' | 'copy';

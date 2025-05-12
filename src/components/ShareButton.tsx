@@ -16,7 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Share2, Loader2, MapPin, Twitter, Linkedin, ClipboardCopy, Pin } from 'lucide-react';
+import { Share2, Loader2, MapPin, Twitter, Linkedin, ClipboardCopy, Pin, Facebook } from 'lucide-react';
 import { getAddressFromCoordinates } from '@/app/actions/shareActions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +49,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
     { value: 'twitter', label: 'Twitter / X', icon: <Twitter className="h-4 w-4" /> },
     { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-4 w-4" /> },
     { value: 'pinterest', label: 'Pinterest', icon: <Pin className="h-4 w-4" /> },
+    { value: 'facebook', label: 'Facebook', icon: <Facebook className="h-4 w-4" /> },
     { value: 'copy', label: 'Copy to Clipboard', icon: <ClipboardCopy className="h-4 w-4" /> },
   ];
 
@@ -123,10 +124,15 @@ export function ShareButton({ geo }: ShareButtonProps) {
         const pinterestDescription = [
           `My current location via HegGeo: ${locationText}.`,
           customMessage.trim() ? customMessage.trim() : '',
-          HASHTAG
+          HASHTAG,
+          `Check it out on the map: ${geoLink}`
         ].filter(Boolean).join(' ');
-        const placeholderImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${geo.latitude},${geo.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:G%7C${geo.latitude},${geo.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`; // Replace with actual key if available or remove 
-        shareUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(geoLink)}&description=${encodeURIComponent(pinterestDescription)}&media=${encodeURIComponent(placeholderImageUrl)}`; 
+        // Pinterest will try to scrape an image from the geoLink (Google Maps).
+        shareUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(geoLink)}&description=${encodeURIComponent(pinterestDescription)}`; 
+        window.open(shareUrl, '_blank');
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(geoLink)}&quote=${encodeURIComponent(baseMessage)}`;
         window.open(shareUrl, '_blank');
         break;
       case 'copy':
