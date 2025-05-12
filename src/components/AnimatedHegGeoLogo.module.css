@@ -1,0 +1,80 @@
+
+.logoContainer {
+  position: relative;
+  display: inline-block;
+  /* Base color is set via primary text color in Header for Link, but can be overridden if needed */
+  /* color: hsl(var(--primary)); */
+}
+
+.animatedText {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  font-weight: bold; /* Ensure font is bold */
+  color: hsl(var(--primary)); /* Use theme's primary color, which is orange */
+  transition: opacity 0.3s ease-in-out; /* For smooth text changes if ever needed */
+}
+
+/* Stage 1: #HEGGEO - Pulsing */
+.stage1 {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Stage 2: #Heg Geo - Bursting effect */
+.stage2 {
+  animation: burst 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+/* Stage 3: #HegGeo - Fade in and settle */
+.stage3 {
+  animation: fadeInAndSettle 1s ease-out forwards;
+}
+
+
+/* Keyframes */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+@keyframes burst {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.05); /* Settle slightly larger */
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInAndSettle {
+  0% {
+    opacity: 0;
+    transform: scale(0.90) translateY(5px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0px);
+  }
+}
+
+/* 
+  Removed text-shadows and complex filter animations to eliminate the "fire aura".
+  Animations are simplified to focus on transformations (scale, opacity, translate)
+  to maintain dynamic text evolution without the glow effects.
+*/

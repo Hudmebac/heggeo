@@ -10,6 +10,7 @@ import { HelpCircle, Settings, LifeBuoy } from 'lucide-react';
 import { HowToModal } from '@/components/HowToModal';
 import { SOSSetupModal } from '@/components/SOSSetupModal';
 import { SOSButton } from '@/components/SOSButton';
+import AnimatedHegGeoLogo from '@/components/AnimatedHegGeoLogo'; // Import the new component
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +31,7 @@ export function Header() {
         <div className="container mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
             <LogoIcon className="h-8 w-8 sm:h-10 sm:w-10" />
-            <h1 className="font-orbitron uppercase tracking-wider text-xl sm:text-2xl font-bold">
-              HegGeo
-            </h1>
+            <AnimatedHegGeoLogo /> {/* Replace h1 with AnimatedHegGeoLogo */}
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <SOSButton onNeedsSetup={() => setIsSOSSetupModalOpen(true)} />
