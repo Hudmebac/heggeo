@@ -6,11 +6,23 @@ import { useState } from 'react';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Settings, LifeBuoy } from 'lucide-react';
 import { HowToModal } from '@/components/HowToModal';
+import { SOSSetupModal } from '@/components/SOSSetupModal';
+import { SOSButton } from '@/components/SOSButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export function Header() {
   const [isHowToModalOpen, setIsHowToModalOpen] = useState(false);
+  const [isSOSSetupModalOpen, setIsSOSSetupModalOpen] = useState(false);
 
   return (
     <>
@@ -22,22 +34,38 @@ export function Header() {
               HegGeo
             </h1>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => setIsHowToModalOpen(true)}
-              className="h-9 w-9"
-              aria-label="Open how-to guide"
-            >
-              <HelpCircle className="h-[1.2rem] w-[1.2rem]" />
-            </Button>
-            <ThemeSwitcher />
-            {/* Future navigation items can go here */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <SOSButton onNeedsSetup={() => setIsSOSSetupModalOpen(true)} />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Open settings and help menu">
+                  <Settings className="h-[1.2rem] w-[1.2rem]" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsSOSSetupModalOpen(true)}>
+                  <LifeBuoy className="mr-2 h-4 w-4" />
+                  <span>Configure SOS</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsHowToModalOpen(true)}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span>How-to Guide</span>
+                </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                 <ThemeSwitcher /> {/* ThemeSwitcher itself renders DropdownMenuItems now */}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Removed direct ThemeSwitcher and HelpButton as they are in Dropdown */}
           </div>
         </div>
       </header>
       <HowToModal isOpen={isHowToModalOpen} onOpenChange={setIsHowToModalOpen} />
+      <SOSSetupModal isOpen={isSOSSetupModalOpen} onOpenChange={setIsSOSSetupModalOpen} />
     </>
   );
 }

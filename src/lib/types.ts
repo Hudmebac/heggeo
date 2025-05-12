@@ -21,9 +21,10 @@ export interface JourneyDetails {
 
 export type Theme = "light" | "dark" | "hc-light" | "hc-dark";
 
-// It seems like Label might be needed by other components, 
-// adding its path here if it's considered a shared UI element type definition.
-// However, typically types.ts is for data structures.
-// If this is specifically for ShadCN Label, it's usually imported directly.
-// For now, keeping types.ts focused on data types. If Label type is needed broadly, it can be added.
-
+export interface SOSSettings {
+  targetPhoneNumber: string; // e.g., +11234567890
+  contactDisplayName: string; // Name to use in the message body, e.g., "Emergency Contact" or "Mom"
+  userName: string; // User's name, e.g., "Craig Heggie"
+  defaultSituation: string; // Default message for "WHAT" part, e.g., "in Distress, need help"
+}
+```
