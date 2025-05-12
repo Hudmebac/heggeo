@@ -17,9 +17,12 @@ HegGeo is a Next.js web application that allows users to "drop" their current ge
 
 *   **Alarm Mode:**
     *   Activate a siren sound.
-    *   **Instant Alarm:** A quick 20-second alarm at maximum volume.
+    *   **Instant Alarm:** A quick, fixed duration alarm at maximum volume.
     *   **Configured Alarm:** Set custom duration, volume, and siren type.
     *   Alarms can be stopped manually.
+*   **SOS Functionality:**
+    *   Store multiple SOS configurations.
+    *   Designate a default SOS configuration. Only one default is allowed at a time.
 
 *   **Sharing:**
     *   Share your active Geo via WhatsApp.

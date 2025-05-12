@@ -117,7 +117,7 @@ export function JourneyTimeTracker({ userLocation, locationError }: JourneyTimeT
                 type="text"
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                placeholder="Address, place, or lat,lon"
+                placeholder="Address, Place, Postcode..."
                 disabled={isLoading}
                 required
                 className="flex-grow"
@@ -143,7 +143,7 @@ export function JourneyTimeTracker({ userLocation, locationError }: JourneyTimeT
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                placeholder="Address, place, or lat,lon"
+                placeholder="Address, Place, Postcode..."
                 disabled={isLoading}
                 required
                 className="flex-grow"
@@ -212,3 +212,4 @@ export function JourneyTimeTracker({ userLocation, locationError }: JourneyTimeT
     </Card>
   );
 }
+
