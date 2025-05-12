@@ -21,10 +21,12 @@ export interface JourneyDetails {
 
 export type Theme = "light" | "dark" | "hc-light" | "hc-dark";
 
-export interface SOSSettings {
+export interface SOSSetting {
+  id: string; // Unique identifier for the SOS configuration
+  name: string; // User-defined name for this SOS configuration (e.g., "Hiking Emergency")
   targetPhoneNumber: string; // e.g., +11234567890
   contactDisplayName: string; // Name to use in the message body, e.g., "Emergency Contact" or "Mom"
   userName: string; // User's name, e.g., "Craig Heggie"
   defaultSituation: string; // Default message for "WHAT" part, e.g., "in Distress, need help"
+  isDefault: boolean; // Whether this is the default SOS configuration to use
 }
-```

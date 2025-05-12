@@ -17,7 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings } from 'lucide-react'; // Added Settings
+import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, ChevronLeft } from 'lucide-react';
 
 interface HowToModalProps {
   isOpen: boolean;
@@ -139,26 +139,36 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                 <LifeBuoy className="mr-2 h-5 w-5 text-destructive" /> SOS Mode
               </AccordionTrigger>
               <AccordionContent className="text-sm space-y-2 pl-2">
-                <p>Quickly send a pre-configured emergency message via WhatsApp.</p>
-                <p><strong><Settings2 className="inline h-4 w-4 text-primary" /> Setting up SOS:</strong></p>
+                <p>Quickly send a pre-configured emergency message via WhatsApp using your default SOS settings.</p>
+                <p><strong><Settings2 className="inline h-4 w-4 text-primary" /> Managing SOS Configurations:</strong></p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Click the <Settings className="inline h-4 w-4" /> icon in the header, then select 'Configure SOS'.</li>
-                  <li>In the dialog, enter:
+                  <li>In the dialog, you can manage multiple SOS configurations:
                       <ul className="list-disc list-inside ml-4">
-                          <li><strong>Emergency WhatsApp Number:</strong> The phone number (with country code, e.g., +11234567890) of your emergency contact.</li>
-                          <li><strong>Contact's Display Name:</strong> How the contact is addressed in the message (e.g., "Mom", "Emergency Services").</li>
-                          <li><strong>Your Name:</strong> Your name as it will appear.</li>
-                          <li><strong>Default Situation:</strong> A brief description of a typical emergency (e.g., "I am in distress and need help."). You can include details like WHO, WHAT, CONDITION, NEEDS.</li>
+                          <li><strong>View List:</strong> See all your saved SOS configurations. The default one will be marked with a <Star className="inline h-3 w-3" />.</li>
+                          <li><strong><PlusCircle className="inline h-4 w-4" /> Add New:</strong> Click 'Add New SOS' to create a new configuration. You'll need to provide:
+                              <ul className="list-disc list-inside ml-4">
+                                <li><strong>Configuration Name:</strong> A friendly name (e.g., "Hiking SOS", "Medical Alert").</li>
+                                <li><strong>Emergency WhatsApp Number:</strong> The phone number (with country code).</li>
+                                <li><strong>Contact's Display Name:</strong> How they're addressed.</li>
+                                <li><strong>Your Name.</strong></li>
+                                <li><strong>Default Situation:</strong> Your primary emergency message.</li>
+                                <li>Optionally, set it as the default.</li>
+                              </ul>
+                          </li>
+                          <li><strong><Edit className="inline h-4 w-4" /> Edit:</strong> Click the edit icon next to a configuration to modify its details.</li>
+                          <li><strong><Trash2 className="inline h-4 w-4" /> Delete:</strong> Click the delete icon to remove a configuration.</li>
+                          <li><strong>Set as Default:</strong> If a configuration is not the default, a button will appear to make it so. Only one configuration can be the default.</li>
                       </ul>
                   </li>
-                  <li>Click 'Save SOS Settings'. This information is stored locally on your device.</li>
+                  <li>All SOS configurations are stored locally on your device.</li>
                 </ol>
                 <p className="mt-2"><strong><AlertTriangle className="inline h-4 w-4 text-destructive" /> Sending an SOS:</strong></p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Click the red 'SOS' button in the header.</li>
-                  <li>If not configured, you'll be prompted to set it up.</li>
-                  <li>If configured, the app will get your current location.</li>
-                  <li>WhatsApp will open with a pre-filled message to your emergency contact, including:
+                  <li>If no SOS configurations exist or no default is set, you'll be prompted to set one up.</li>
+                  <li>If a default SOS configuration is available, the app will get your current location.</li>
+                  <li>WhatsApp will open with a pre-filled message to the emergency contact specified in your <strong>default</strong> SOS configuration. The message includes:
                       <ul className="list-disc list-inside ml-4">
                           <li>The contact's display name.</li>
                           <li>Your name.</li>
@@ -209,7 +219,6 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
 
 
 // Helper icons used in HowToModal that might not be globally available easily.
-// Re-defining them here if they were not part of an earlier import
 const PlayCircle = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
 );

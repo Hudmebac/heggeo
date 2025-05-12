@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import type { SOSSettings, UserLocation } from '@/lib/types';
+import type { SOSSetting, UserLocation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { LifeBuoy, Loader2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +13,7 @@ interface SOSButtonProps {
   onNeedsSetup: () => void; // Callback to open the setup modal
 }
 
-const SOS_CONFIG_LOCAL_STORAGE_KEY = 'heggeo_sos_configuration';
+const SOS_CONFIG_LOCAL_STORAGE_KEY = 'heggeo_sos_configurations_array'; // Updated key
 const APP_LINK = "https://heggeo.netlify.app/";
 const HASHTAG = "#HegGeo";
 
@@ -23,29 +23,41 @@ export function SOSButton({ onNeedsSetup }: SOSButtonProps) {
   const { location: userLocation, error: locationError, loading: locationLoading, refreshLocation } = useGeoLocation();
 
   const handleSOS = async () => {
-    const storedConfigString = localStorage.getItem(SOS_CONFIG_LOCAL_STORAGE_KEY);
-    if (!storedConfigString) {
+    const storedConfigsString = localStorage.getItem(SOS_CONFIG_LOCAL_STORAGE_KEY);
+    let sosConfigs: SOSSetting[] = [];
+    if (storedConfigsString) {
+      try {
+        sosConfigs = JSON.parse(storedConfigsString) as SOSSetting[];
+      } catch (e) {
+        console.error("Error parsing SOS configurations:", e);
+        toast({
+          title: "SOS Config Error",
+          description: "Could not load SOS settings. Please re-configure.",
+          variant: "destructive",
+          action: <Button onClick={onNeedsSetup} variant="secondary" size="sm">Setup SOS</Button>
+        });
+        return;
+      }
+    }
+
+    const defaultSosConfig = sosConfigs.find(config => config.isDefault);
+
+    if (!defaultSosConfig) {
       toast({
-        title: "SOS Not Configured",
-        description: "Please set up your SOS contact and message first.",
+        title: "Default SOS Not Set",
+        description: sosConfigs.length > 0 ? "Please set a default SOS configuration." : "Please set up your SOS contact and message first.",
         variant: "destructive",
         action: <Button onClick={onNeedsSetup} variant="secondary" size="sm">Setup SOS</Button>
       });
-      // onNeedsSetup(); // Optionally open modal directly
       return;
     }
 
     let currentSosLocation = userLocation;
     if (!currentSosLocation && !locationLoading) {
-        // If no location and not loading, try to refresh
-        await refreshLocation(); // This will update userLocation via the hook's state
-        // We need to wait for the location to be available. This could be complex.
-        // For now, let's assume refreshLocation updates `userLocation` observed by the next render or a short delay.
-        // A more robust solution might involve awaiting a promise from refreshLocation.
-        // However, useGeoLocation doesn't return a promise from refreshLocation.
-        // Let's proceed, and if location is still null, we'll show an error.
+        await refreshLocation(); // Attempt to refresh
+        // This updates userLocation state in the hook, which might not be immediately available here.
+        // We'll re-check it below.
     }
-
 
     if (locationLoading) {
         toast({ title: "Getting Location...", description: "Please wait while we fetch your current position." });
@@ -53,7 +65,8 @@ export function SOSButton({ onNeedsSetup }: SOSButtonProps) {
     }
     
     // Re-check location after potential refresh attempt or if it was loading
-    if (!userLocation) { // Check hook's current userLocation state
+    currentSosLocation = userLocation; // Use the hook's current state for userLocation
+    if (!currentSosLocation) {
         toast({
           title: "Location Unavailable",
           description: locationError || "Could not get your current location for SOS. Please enable location services.",
@@ -61,13 +74,12 @@ export function SOSButton({ onNeedsSetup }: SOSButtonProps) {
         });
         return;
     }
-    currentSosLocation = userLocation; // Use the (potentially) updated location
 
 
     setIsSendingSOS(true);
 
     try {
-      const sosConfig = JSON.parse(storedConfigString) as SOSSettings;
+      const sosConfigToUse = defaultSosConfig; // Already found the default
       
       let locationText = `Coordinates: ${currentSosLocation.latitude.toFixed(5)}, ${currentSosLocation.longitude.toFixed(5)}`;
       try {
@@ -82,19 +94,19 @@ export function SOSButton({ onNeedsSetup }: SOSButtonProps) {
       const locationUrl = `https://www.google.com/maps?q=${currentSosLocation.latitude},${currentSosLocation.longitude}`;
 
       const messageParts = [
-        `${sosConfig.contactDisplayName},`,
-        `It Is ${sosConfig.userName},`,
-        `I am in ${sosConfig.defaultSituation}`,
+        `${sosConfigToUse.contactDisplayName},`,
+        `It Is ${sosConfigToUse.userName},`,
+        `I am in ${sosConfigToUse.defaultSituation}`,
         `Find me here: ${locationText} (${locationUrl})`,
         `${HASHTAG} Link: ${APP_LINK}`
       ];
       const fullMessage = messageParts.join('\n');
-      const whatsappUrl = `https://wa.me/${sosConfig.targetPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(fullMessage)}`;
+      const whatsappUrl = `https://wa.me/${sosConfigToUse.targetPhoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(fullMessage)}`;
 
       window.open(whatsappUrl, '_blank');
       toast({
         title: "SOS Message Prepared",
-        description: "WhatsApp is opening with your SOS message. Send it now!",
+        description: `Using "${sosConfigToUse.name}". WhatsApp is opening. Send it now!`,
       });
 
     } catch (e) {
