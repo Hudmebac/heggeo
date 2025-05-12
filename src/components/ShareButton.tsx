@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Geo } from '@/lib/types';
+import type { Geo, SharePlatform } from '@/lib/types';
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,12 +16,19 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Share2, Loader2, MapPin } from 'lucide-react';
+import { Share2, Loader2, MapPin, Twitter, Linkedin, ClipboardCopy, Pin } from 'lucide-react'; // Added more icons
 import { getAddressFromCoordinates } from '@/app/actions/shareActions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ShareButtonProps {
   geo: Geo;
+}
+
+interface PlatformOption {
+  value: SharePlatform;
+  label: string;
+  icon?: React.ReactNode;
 }
 
 export function ShareButton({ geo }: ShareButtonProps) {
@@ -30,16 +37,25 @@ export function ShareButton({ geo }: ShareButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [geoAddress, setGeoAddress] = useState<string | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<SharePlatform>('whatsapp');
 
   const { toast } = useToast();
 
   const APP_LINK = "https://heggeo.netlify.app/";
   const HASHTAG = "#HegGeo";
 
+  const platformOptions: PlatformOption[] = [
+    { value: 'whatsapp', label: 'WhatsApp' },
+    { value: 'twitter', label: 'Twitter / X', icon: <Twitter className="h-4 w-4" /> },
+    { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-4 w-4" /> },
+    { value: 'pinterest', label: 'Pinterest', icon: <Pin className="h-4 w-4" /> },
+    { value: 'copy', label: 'Copy to Clipboard', icon: <ClipboardCopy className="h-4 w-4" /> },
+  ];
+
   useEffect(() => {
     if (isOpen && geo) {
       setIsFetchingAddress(true);
-      setGeoAddress(null); 
+      setGeoAddress(null);
       getAddressFromCoordinates(geo.latitude, geo.longitude)
         .then(address => {
           setGeoAddress(address || `Coordinates: ${geo.latitude.toFixed(4)}, ${geo.longitude.toFixed(4)}`);
@@ -52,45 +68,100 @@ export function ShareButton({ geo }: ShareButtonProps) {
           setIsFetchingAddress(false);
         });
     } else if (!isOpen) {
-      // Reset state when dialog closes
       setCustomMessage("");
       setGeoAddress(null);
       setIsFetchingAddress(false);
+      setSelectedPlatform('whatsapp'); // Reset to default
     }
   }, [isOpen, geo]);
 
-  
   const processAndShare = async () => {
     setIsProcessing(true);
-    
+
     const geoLink = `https://www.google.com/maps?q=${geo.latitude},${geo.longitude}`;
     const locationText = geoAddress || `Lat: ${geo.latitude.toFixed(4)}, Lon: ${geo.longitude.toFixed(4)}`;
-    
+
     let messageParts = [
       `Hi, I am sending my current Geo Location to you as this is where I am:`,
       `${locationText}`
     ];
-
     if (customMessage.trim()) {
       messageParts.push(`\n${customMessage.trim()}`);
     }
-    
     messageParts.push(`\nHere is a Link to the GeoDrop: ${geoLink}`);
     messageParts.push(`\n${HASHTAG}`);
     messageParts.push(`Check out HegGeo: ${APP_LINK}`);
+    
+    const baseMessage = messageParts.join('\n');
+    let shareUrl = "";
 
-    const fullMessage = messageParts.join('\n');
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`;
+    switch (selectedPlatform) {
+      case 'whatsapp':
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(baseMessage)}`;
+        window.open(shareUrl, '_blank');
+        break;
+      case 'twitter':
+        // Adjusted for Twitter's typical usage: Text first, then link. Hashtags usually at end.
+        // Twitter automatically shortens URLs.
+        const twitterMessage = [
+            `Hi, I'm at: ${locationText}`,
+            customMessage.trim() ? `\n${customMessage.trim()}` : '',
+            `\nLocation: ${geoLink}`,
+            `\n${HASHTAG} #GeoDrop`,
+            `\nvia ${APP_LINK}`
+        ].join('');
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterMessage.substring(0, 270))}`; // Keep it under typical limits
+        window.open(shareUrl, '_blank');
+        break;
+      case 'linkedin':
+        const linkedInTitle = `My Current Location via HegGeo`;
+        const linkedInSummary = [
+          `Hi, I am sending my current Geo Location to you as this is where I am:`,
+          `${locationText}`,
+          customMessage.trim() ? `\n${customMessage.trim()}` : '',
+          `\nLink to location: ${geoLink}`,
+          `\n${HASHTAG}`,
+          `Check out HegGeo: ${APP_LINK}`
+        ].join('\n');
+        // LinkedIn prefers sharing a URL, title and summary are for that URL.
+        // We'll make the main shared URL the app link, and put geo details in summary.
+        shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(APP_LINK)}&title=${encodeURIComponent(linkedInTitle)}&summary=${encodeURIComponent(linkedInSummary)}&source=${encodeURIComponent("HegGeo App")}`;
+        window.open(shareUrl, '_blank');
+        break;
+      case 'pinterest':
+        const pinterestDescription = [
+          `My current location via HegGeo: ${locationText}.`,
+          customMessage.trim() ? customMessage.trim() : '',
+          HASHTAG
+        ].join(' ');
+        // Pinterest needs an image URL ideally. We'll share the Google Maps link and hope it can generate a preview.
+        shareUrl = `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(geoLink)}&description=${encodeURIComponent(pinterestDescription)}&media=${encodeURIComponent('https://picsum.photos/600/300?blur=2&random=' + Date.now())}`; // Added a random placeholder image
+        window.open(shareUrl, '_blank');
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(baseMessage)
+          .then(() => {
+            toast({ title: "Copied to Clipboard!", description: "Message copied. You can paste it into any app." });
+          })
+          .catch(err => {
+            toast({ title: "Copy Failed", description: "Could not copy message to clipboard.", variant: "destructive" });
+            console.error("Failed to copy: ", err);
+          });
+        setIsProcessing(false);
+        setIsOpen(false);
+        return; 
+    }
 
-    window.open(whatsappUrl, '_blank');
+    if (selectedPlatform !== 'copy') {
+      toast({
+        title: `${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Opened`,
+        description: "Your message is ready. Add a photo in the app if you wish, then send it!",
+      });
+    }
     setIsProcessing(false);
-    setIsOpen(false); 
-    toast({
-        title: "WhatsApp Opened",
-        description: "Your message is ready. Add a photo in WhatsApp if you wish.",
-    });
+    setIsOpen(false);
   };
-  
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
   };
@@ -103,17 +174,14 @@ export function ShareButton({ geo }: ShareButtonProps) {
       `Hi, I am sending my current Geo Location to you as this is where I am:`,
       `${locationText}`
     ];
-
     if (customMessage.trim()) {
       messageParts.push(`\n${customMessage.trim()}`);
     }
-
     messageParts.push(`\nHere is a Link to the GeoDrop: ${geoLink}`);
     messageParts.push(`\n${HASHTAG}`);
     messageParts.push(`Check out HegGeo: ${APP_LINK}`);
     return messageParts.join('\n');
   };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -125,9 +193,9 @@ export function ShareButton({ geo }: ShareButtonProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Share Geo on WhatsApp</DialogTitle>
+          <DialogTitle>Share Geo</DialogTitle>
           <DialogDescription>
-            Craft your Optional message. Review Message, If you want to add photo do this in WhatsApp. Straight after sending Geo.
+            Craft your optional message. Review the preview. If you want to add a photo, do this in the chosen app.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
@@ -150,12 +218,32 @@ export function ShareButton({ geo }: ShareButtonProps) {
               rows={3}
             />
           </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="share-platform">Share to</Label>
+            <Select value={selectedPlatform} onValueChange={(value) => setSelectedPlatform(value as SharePlatform)}>
+              <SelectTrigger id="share-platform" className="w-full">
+                <SelectValue placeholder="Select platform" />
+              </SelectTrigger>
+              <SelectContent>
+                {platformOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-2">
+                      {opt.icon}
+                      {opt.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="space-y-2 pt-2 border-t">
-            <Label>Message Preview for WhatsApp:</Label>
+            <Label>Message Preview (generic for WhatsApp/Copy):</Label>
             <div className="text-xs p-2 border rounded-md bg-muted/50 whitespace-pre-wrap break-words">
               {constructPreviewMessage()}
             </div>
+             <p className="text-xs text-muted-foreground">Actual message format may vary slightly by platform.</p>
           </div>
 
         </div>
@@ -165,7 +253,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
           </Button>
           <Button type="button" onClick={processAndShare} disabled={isProcessing || isFetchingAddress}>
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-            Share to WhatsApp
+            Share to {platformOptions.find(p => p.value === selectedPlatform)?.label || 'Selected Platform'}
           </Button>
         </DialogFooter>
       </DialogContent>

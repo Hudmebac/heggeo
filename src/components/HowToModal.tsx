@@ -17,7 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, ChevronLeft } from 'lucide-react';
+import { MapPin, Share2, Navigation, AlertTriangle, Palette, TimerIcon, Globe, Volume2, Settings2, LifeBuoy, Settings, PlusCircle, Edit, Trash2, Star, ChevronLeft, Twitter, Linkedin, ClipboardCopy, Pin as PinterestIcon } from 'lucide-react'; // Added social icons
 
 interface HowToModalProps {
   isOpen: boolean;
@@ -67,18 +67,27 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                 <Share2 className="mr-2 h-5 w-5 text-primary" /> Active Geo & Sharing
               </AccordionTrigger>
               <AccordionContent className="text-sm space-y-2 pl-2">
-                <p>View details of your active Geo and share it with others.</p>
+                <p>View details of your active Geo and share it across various platforms.</p>
                 <p><strong>Viewing Active Geo:</strong></p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Once a Geo is dropped, its details (time remaining, coordinates, drop time, total lifespan) are displayed in the 'Active Geo' card. If "No Lifespan" was selected, time remaining and total lifespan will show "No Expiry" or "Indefinite".</li>
                 </ul>
-                <p className="mt-2"><strong>Sharing on WhatsApp:</strong></p>
+                <p className="mt-2"><strong>Sharing your Geo:</strong></p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>In the 'Active Geo' card, click the 'Share Geo' button.</li>
                   <li>A dialog will appear. You can (optionally) add a custom text message.</li>
-                  <li>Review the pre-filled message. If you want to add a photo, you will need to do this manually in WhatsApp after the chat opens.</li>
-                  <li>Click the 'Share to WhatsApp' button in the dialog.</li>
-                  <li>This will open WhatsApp with a pre-filled message. The message includes:
+                  <li>Select your desired sharing platform from the dropdown (default is WhatsApp). Options include:
+                    <ul className="list-disc list-inside ml-4">
+                        <li><strong>WhatsApp:</strong> Shares a pre-filled message.</li>
+                        <li><strong><Twitter className="inline h-4 w-4" /> Twitter / X:</strong> Shares a concise message with link and hashtags.</li>
+                        <li><strong><Linkedin className="inline h-4 w-4" /> LinkedIn:</strong> Shares an article-style post with your location details.</li>
+                        <li><strong><PinterestIcon className="inline h-4 w-4" /> Pinterest:</strong> Creates a pin with your map link and description.</li>
+                        <li><strong><ClipboardCopy className="inline h-4 w-4" /> Copy to Clipboard:</strong> Copies the full message for manual pasting into other apps (like Instagram, TikTok, Snapchat, or email).</li>
+                    </ul>
+                  </li>
+                  <li>Review the pre-filled message preview (this preview is generic; the actual format may vary slightly by platform).</li>
+                  <li>Click the 'Share to [Platform Name]' button in the dialog.</li>
+                  <li>This will open the selected app/service (or copy the message). The message generally includes:
                     <ul className="list-disc list-inside ml-4">
                         <li>A greeting and statement about your location.</li>
                         <li>The address of your Geo.</li>
@@ -88,6 +97,8 @@ export function HowToModal({ isOpen, onOpenChange }: HowToModalProps) {
                         <li>A link to the HegGeo application.</li>
                     </ul>
                   </li>
+                   <li>If you want to add a photo, you will need to do this manually in the chosen app after the share dialog opens it.</li>
+                   <li>For platforms like Instagram, TikTok, and Snapchat, use the "Copy to Clipboard" option, then open the app and paste the message, adding any media manually.</li>
                 </ol>
               </AccordionContent>
             </AccordionItem>
@@ -227,5 +238,3 @@ const PlayCircle = (props: React.SVGProps<SVGSVGElement>) => (
 const LocateFixed = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg>
 );
-
-
