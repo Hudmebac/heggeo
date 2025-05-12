@@ -18,6 +18,9 @@ const orbitronFont = Orbitron({
 export const metadata: Metadata = {
   title: 'HegGeo',
   description: 'Drop time-limited Geos and share your location.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 // Function to safely stringify for dangerouslySetInnerHTML
@@ -66,6 +69,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeInitializationScript />
+        {/* The favicon.ico file should be placed in the 'public' folder */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body 
         className={`${inter.variable} ${orbitronFont.variable} antialiased`}
