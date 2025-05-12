@@ -17,9 +17,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Share2, Camera, Paperclip, Loader2 } from 'lucide-react';
+import { Share2, Camera, Paperclip, Loader2, MapPin } from 'lucide-react';
 import { describeImage, type DescribeImageInput } from '@/ai/flows/describe-image-flow';
-import NextImage from 'next/image'; // Renamed to avoid conflict if any, and use for Next.js image optimization
+import NextImage from 'next/image';
+import { getAddressFromCoordinates } from '@/app/actions/shareActions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShareButtonProps {
   geo: Geo;
@@ -31,6 +33,11 @@ export function ShareButton({ geo }: ShareButtonProps) {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const [geoAddress, setGeoAddress] = useState<string | null>(null);
+  const [generatedImageDescription, setGeneratedImageDescription] = useState<string>("");
+
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,25 +45,10 @@ export function ShareButton({ geo }: ShareButtonProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
-
   const { toast } = useToast();
 
   const APP_LINK = "https://heggeo.netlify.app/";
   const HASHTAG = "#HegGeo";
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-      if (isCameraOpen && stream) { // Close camera if open
-        stream.getTracks().forEach(track => track.stop());
-        setStream(null);
-        setIsCameraOpen(false);
-        if (videoRef.current) videoRef.current.srcObject = null;
-      }
-    }
-  };
 
   const stopCameraStream = useCallback(() => {
     if (stream) {
@@ -66,6 +58,47 @@ export function ShareButton({ geo }: ShareButtonProps) {
     }
     setIsCameraOpen(false);
   }, [stream]);
+
+  useEffect(() => {
+    if (isOpen && geo) {
+      setIsFetchingAddress(true);
+      setGeoAddress(null); // Reset address on dialog open
+      getAddressFromCoordinates(geo.latitude, geo.longitude)
+        .then(address => {
+          setGeoAddress(address || `Coordinates: ${geo.latitude.toFixed(4)}, ${geo.longitude.toFixed(4)}`);
+        })
+        .catch(error => {
+          console.error("Error fetching address:", error);
+          setGeoAddress(`Error fetching address for ${geo.latitude.toFixed(4)}, ${geo.longitude.toFixed(4)}`);
+        })
+        .finally(() => {
+          setIsFetchingAddress(false);
+        });
+    } else if (!isOpen) {
+      // Reset state when dialog closes
+      stopCameraStream();
+      setCustomMessage("");
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setHasCameraPermission(null);
+      setGeoAddress(null);
+      setIsFetchingAddress(false);
+      setGeneratedImageDescription("");
+    }
+  }, [isOpen, geo, stopCameraStream]);
+
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+      setGeneratedImageDescription(""); // Reset AI description if new photo uploaded
+      if (isCameraOpen && stream) { 
+        stopCameraStream();
+      }
+    }
+  };
 
   const handleOpenCamera = async () => {
     if (isCameraOpen && stream) {
@@ -82,6 +115,7 @@ export function ShareButton({ geo }: ShareButtonProps) {
       setHasCameraPermission(true);
       setPhotoFile(null); 
       setPhotoPreview(null);
+      setGeneratedImageDescription(""); // Reset AI description
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -107,18 +141,19 @@ export function ShareButton({ geo }: ShareButtonProps) {
             const file = new File([blob], "capture.png", { type: "image/png" });
             setPhotoFile(file);
             setPhotoPreview(URL.createObjectURL(file));
+            setGeneratedImageDescription(""); // Reset AI description
           }
         }, 'image/png');
       }
       stopCameraStream();
     }
   };
-
-  const handleShare = async () => {
+  
+  const processAndShare = async () => {
     setIsProcessing(true);
-    let imageDescription = "";
-    
-    if (photoFile) {
+    let currentImageDescription = "";
+
+    if (photoFile && !generatedImageDescription) { // Only generate if not already generated for current photo
       try {
         const photoDataUri = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -129,8 +164,9 @@ export function ShareButton({ geo }: ShareButtonProps) {
 
         const aiInput: DescribeImageInput = { photoDataUri };
         const aiOutput = await describeImage(aiInput);
-        imageDescription = aiOutput.description;
-        toast({ title: "AI Description", description: `Generated: ${imageDescription}` });
+        currentImageDescription = aiOutput.description;
+        setGeneratedImageDescription(currentImageDescription); // Store for preview
+        toast({ title: "AI Description Generated", description: `"${currentImageDescription}"` });
       } catch (error) {
         console.error("Error processing image for AI description:", error);
         toast({
@@ -139,14 +175,35 @@ export function ShareButton({ geo }: ShareButtonProps) {
           variant: "default",
         });
       }
+    } else if (photoFile && generatedImageDescription) {
+      currentImageDescription = generatedImageDescription; // Use already generated one
     }
 
+
     const geoLink = `https://www.google.com/maps?q=${geo.latitude},${geo.longitude}`;
+    const locationText = geoAddress || `Lat: ${geo.latitude.toFixed(4)}, Lon: ${geo.longitude.toFixed(4)}`;
     
-    let messageParts = [];
-    if (customMessage) messageParts.push(customMessage);
-    messageParts.push(`My current GeoDrop: ${geoLink}`);
-    if (imageDescription) messageParts.push(`\nImage: ${imageDescription}`);
+    let messageParts = [
+      "Hi, I am sending my current Geo Location to you as this is where I am.",
+      `I am at: ${locationText}`,
+      `Here is a Link to the GeoDrop: ${geoLink}`
+    ];
+
+    if (customMessage.trim()) {
+      messageParts.push(`\nMy message: ${customMessage.trim()}`);
+    }
+
+    if (photoFile) {
+      // Note to user about manual attachment is good, but not explicitly requested for UI.
+      // For now, the preview in-app serves as the "Present Image" part.
+      // The AI description will be part of the text.
+      if (currentImageDescription) {
+        messageParts.push(`\nAbout the image: ${currentImageDescription}`);
+      } else {
+        messageParts.push("\n(See attached image)");
+      }
+    }
+
     messageParts.push(`\n${HASHTAG}`);
     messageParts.push(`Check out HegGeo: ${APP_LINK}`);
 
@@ -156,15 +213,9 @@ export function ShareButton({ geo }: ShareButtonProps) {
     window.open(whatsappUrl, '_blank');
     setIsProcessing(false);
     setIsOpen(false); // Close dialog after sharing
-    // Reset state after closing
-    setCustomMessage("");
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    stopCameraStream();
   };
-  
+
   useEffect(() => {
-    // Cleanup stream if component unmounts or dialog is closed
     return () => {
       stopCameraStream();
     };
@@ -172,15 +223,37 @@ export function ShareButton({ geo }: ShareButtonProps) {
   
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) { 
-      stopCameraStream();
-      // Reset states when dialog closes to ensure fresh state on reopen
-      setCustomMessage("");
-      setPhotoFile(null);
-      setPhotoPreview(null);
-      setHasCameraPermission(null); // Reset camera permission status
-    }
   };
+
+  const constructPreviewMessage = () => {
+    const geoLink = `https://www.google.com/maps?q=${geo.latitude},${geo.longitude}`;
+    const locationText = geoAddress || (isFetchingAddress ? "Fetching address..." : `Lat: ${geo.latitude.toFixed(4)}, Lon: ${geo.longitude.toFixed(4)}`);
+
+    let messageParts = [
+      "Hi, I am sending my current Geo Location to you as this is where I am.",
+      `I am at: ${locationText}`,
+      `Here is a Link to the GeoDrop: ${geoLink}`
+    ];
+
+    if (customMessage.trim()) {
+      messageParts.push(`\nMy message: ${customMessage.trim()}`);
+    }
+    
+    if (photoFile) {
+      if (generatedImageDescription) {
+        messageParts.push(`\nAbout the image: ${generatedImageDescription}`);
+      } else if (isProcessing && !generatedImageDescription) {
+        messageParts.push(`\nAbout the image: (Generating description...)`);
+      } else {
+         messageParts.push(`\n(Image will be attached - AI description pending or not generated)`);
+      }
+    }
+
+    messageParts.push(`\n${HASHTAG}`);
+    messageParts.push(`Check out HegGeo: ${APP_LINK}`);
+    return messageParts.join('\n');
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -194,12 +267,21 @@ export function ShareButton({ geo }: ShareButtonProps) {
         <DialogHeader>
           <DialogTitle>Share Geo on WhatsApp</DialogTitle>
           <DialogDescription>
-            Add an optional message and photo to share with your Geo location.
+            Craft your message. Photo (if added) and AI description will be part of the text. You'll need to manually attach the photo in WhatsApp.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1"><MapPin className="h-4 w-4 text-muted-foreground" /> Your Location</Label>
+            {isFetchingAddress ? (
+              <Skeleton className="h-5 w-3/4" />
+            ) : (
+              <p className="text-sm text-muted-foreground break-words">{geoAddress || "Loading address..."}</p>
+            )}
+          </div>
+
           <div className="grid gap-2">
-            <Label htmlFor="custom-message">Optional Message</Label>
+            <Label htmlFor="custom-message">Optional Custom Message</Label>
             <Textarea
               id="custom-message"
               placeholder="E.g., Come join me here!"
@@ -257,20 +339,25 @@ export function ShareButton({ geo }: ShareButtonProps) {
               </div>
             </div>
           )}
+          
+          <div className="space-y-2 pt-2 border-t">
+            <Label>Message Preview for WhatsApp:</Label>
+            <div className="text-xs p-2 border rounded-md bg-muted/50 whitespace-pre-wrap break-words">
+              {constructPreviewMessage()}
+            </div>
+          </div>
 
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleShare} disabled={isProcessing}>
+          <Button type="button" onClick={processAndShare} disabled={isProcessing || isFetchingAddress}>
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-            Share
+            Share to WhatsApp
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
